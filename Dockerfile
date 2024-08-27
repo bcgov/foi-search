@@ -1,18 +1,21 @@
-FROM solr:8.11.2
+FROM solr:9.5
 LABEL maintainer="jason.dudash@gmail.com"
 LABEL maintainer="emiliano.sune@gmail.com"
 
 USER root
 ENV STI_SCRIPTS_PATH=/usr/libexec/s2i
 
+RUN mkdir -p /var/solr/data/foisearch
+
+
 RUN apt-get update -y && \
     apt-get install -y \
     zip
 
 LABEL io.k8s.description="Run SOLR search in OpenShift" \
-      io.k8s.display-name="SOLR 8.11.2" \
+      io.k8s.display-name="SOLR 9.5" \
       io.openshift.expose-services="8983:http" \
-      io.openshift.tags="builder,solr,solr8.11.2" \
+      io.openshift.tags="builder,solr,solr9.5" \
       io.openshift.s2i.scripts-url="image:///${STI_SCRIPTS_PATH}"
 
 COPY ./s2i/bin/. ${STI_SCRIPTS_PATH}
