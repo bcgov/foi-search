@@ -1,0 +1,55 @@
+#!/bin/bash -e
+# The run script executes the SOLR server
+#
+# For more information see the documentation:
+# https://docs.openshift.org/latest/creating_images/s2i.html#creating-images-s2i
+
+# Override this env variable to change the name of your core.
+if [ -z "${CORE_NAME}" ]; then
+  CORE_NAME=autocore
+fi
+
+SOLR_CONF_DIR="${SOLR_CONF_DIR:-/opt/solr/server/solr/configsets}"
+
+if [ -z "${CONF_DIR}" ]; then
+  CONF_DIR="${SOLR_CONF_DIR}/${CORE_NAME}"
+fi
+
+if [ -z "${CORES_DIR}" ]; then
+  CORES_DIR="${SOLR_HOME}"
+else
+  CORES_DIR="${CORES_DIR}"
+fi
+
+CORE_DIR="${CORES_DIR}/${CORE_NAME}"
+
+# Use scripts from the official docker-solr image
+# https://github.com/docker-solr/docker-solr/tree/master/scripts
+echo "Working from; $(pwd)"
+echo
+
+if [[ ! -d ${CORE_DIR} ]]; then
+  echo "====================================================================="
+  echo "Pre-Creating SOLR Core for first run:"
+  echo "---------------------------------------------------------------------"
+  echo "Core Name: ${CORE_NAME}" 
+  echo "Configuration: ${CONF_DIR}"
+  echo "Core Directory: ${CORE_DIR}"
+  echo
+  echo "Cores are created by default in ${SOLR_HOME}, in a directory matching the core name."
+  echo "To customize the directory where cores will be created, use the ${CORES_DIR} environment variable."
+  echo "====================================================================="
+  
+  solr-precreate ${CORE_NAME} ${CONF_DIR}
+else
+  echo "====================================================================="
+  echo "Updating existing SOLR core Configuration Files:"
+  echo "---------------------------------------------------------------------"
+  echo "Core Name: ${CORE_NAME}" 
+  echo "Configuration Source: ${CONF_DIR}"
+  echo "Cores Directory: ${CORES_DIR}/${CORE_NAME}"
+  echo "====================================================================="
+  
+  cp -r "${CONF_DIR}/" "${CORES_DIR}"
+  exec solr -f
+fi
