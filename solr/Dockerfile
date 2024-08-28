@@ -22,7 +22,7 @@ LABEL io.k8s.description="Run SOLR search in OpenShift" \
       io.openshift.tags="builder,solr,solr:8.11.2" \
       io.openshift.s2i.scripts-url="image:///${STI_SCRIPTS_PATH}"
 
-COPY ./s2i/bin/. ${STI_SCRIPTS_PATH}
+#COPY ./s2i/bin/. ${STI_SCRIPTS_PATH}
 RUN chmod -R a+rx ${STI_SCRIPTS_PATH}
 
 # If we need to add files as part of every SOLR conf, they'd go here
