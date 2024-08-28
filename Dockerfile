@@ -8,7 +8,7 @@ ENV STI_SCRIPTS_PATH=/usr/libexec/s2i
 RUN apt-get update \
     && apt-get install -y git
 
-RUN MKDIR foisearch
+RUN mkdir foisearch
 RUN git clone -b https://github.com/bcgov/foi-search/  /foisearch/
 
 
