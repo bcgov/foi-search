@@ -9,7 +9,7 @@ RUN apt-get update \
     && apt-get install -y git
 
 
-RUN git clone -b https://github.com/bcgov/foi-search/  
+RUN git clone  https://github.com/bcgov/foi-search/  
 
 
 RUN apt-get update -y && \
