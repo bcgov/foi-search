@@ -1,8 +1,8 @@
 package main
 
 import (
-	"azuredocextractservice/amqpservices"
 	"azuredocextractservice/azureservices"
+	"azuredocextractservice/httpservices"
 	"azuredocextractservice/s3services"
 	"fmt"
 	"log"
@@ -20,7 +20,7 @@ func main() {
 
 	start := time.Now()
 	fmt.Println("Start Time :" + start.String())
-	dequeuedmessages, err := amqpservices.ProcessMessage()
+	dequeuedmessages, err := httpservices.ProcessMessage()
 	if err != nil {
 		log.Fatalf("Error fetching messages: %v", err)
 	}
