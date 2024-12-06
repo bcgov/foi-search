@@ -63,7 +63,6 @@ objects:
           maxSurge: 25%
         activeDeadlineSeconds: 21600
       triggers:
-        - type: ConfigChange
         - type: ImageChange
           imageChangeParams:
             automatic: true
@@ -73,6 +72,8 @@ objects:
               kind: ImageStreamTag
               namespace: ${IMAGE_NAMESPACE}
               name: ${NAME}:${TAG_NAME}
+            lastTriggeredImage: >-
+              image-registry.openshift-image-registry.svc:5000/fc7a67-dev/solr@sha256:f700818fa3acef1b90d27442fc7ffc5ec2855d24a554ce0b599e7918eb7bbff3
       replicas: 1
       test: false
       selector:
@@ -89,8 +90,7 @@ objects:
               persistentVolumeClaim:
                 claimName: ${NAME}
           containers:
-            - name: ${NAME}
-              image: ""
+            - name: ${NAME}              
               ports:
                 - containerPort: 8983
                   protocol: TCP
@@ -103,6 +103,8 @@ objects:
           restartPolicy: Always
           terminationGracePeriodSeconds: 30
           dnsPolicy: ClusterFirst
+          serviceAccountName: deployer
+          serviceAccount: deployer
           securityContext: {}
           schedulerName: default-scheduler
 parameters:
@@ -115,7 +117,7 @@ parameters:
     displayName: Image Namespace
     required: true
     description: The namespace of the OpenShift project containing the imagestream for the application.
-    value: solr
+    value: fc7a67-dev
   - name: TAG_NAME
     displayName: Environment TAG name
     description: The TAG name for this environment, e.g., dev, test, prod
@@ -129,7 +131,7 @@ parameters:
     displayName: Persistent Volume Size
     description: The size of the persistent volume , e.g. 512Mi, 1Gi, 2Gi.
     required: true
-    value: 1Gi
+    value: 512Mi
   - name: MOUNT_PATH
     displayName: Mount Path
     description: The path to mount the persistent volume.
