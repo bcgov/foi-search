@@ -33,6 +33,12 @@ objects:
             kind: ImageStreamTag
             namespace: ${SOURCE_IMAGE_NAMESPACE}
             name: ${SOURCE_IMAGE_NAME}:${SOURCE_IMAGE_TAG}
+      # strategy:
+      #   type: Docker
+      #   dockerStrategy:
+      #   dockerfilePath: /DockerFile
+      #   pullSecret: 
+      #     name: artifactory-creds
       output:
         to:
           kind: ImageStreamTag
@@ -47,12 +53,12 @@ parameters:
     displayName: Git Repo URL
     description: The URL to your GIT repo, don't use the default unless your just experimenting.
     required: true
-    value: https://github.com/bcgov/openshift-solr
+    value: https://github.com/bcgov/foi-search
   - name: GIT_REF
     displayName: Git Reference
     description: The git reference or branch.
     required: true
-    value: master
+    value: main
   - name: SOURCE_CONTEXT_DIR
     displayName: Source Context Directory
     description: The source context directory.
@@ -72,7 +78,7 @@ parameters:
     displayName: Namespace
     required: true
     description: The OpenShift namespace where the ImageStream resides.
-    value: solr
+    value: fc7a67-dev
   - name: OUTPUT_IMAGE_TAG
     displayName: Output Image Tag
     description: The tag given to the built image.
