@@ -1,8 +1,8 @@
 package main
 
 import (
-	"azuredocextractservice/amqpservices"
 	"azuredocextractservice/azureservices"
+	"azuredocextractservice/httpservices"
 	"azuredocextractservice/s3services"
 	"fmt"
 	"log"
@@ -20,21 +20,14 @@ func main() {
 
 	start := time.Now()
 	fmt.Println("Start Time :" + start.String())
-	dequeuedmessages, err := amqpservices.ProcessMessage()
+	dequeuedmessages, err := httpservices.ProcessMessage()
 	if err != nil {
 		log.Fatalf("Error fetching messages: %v", err)
 	}
 	// Print each message
 	for _, message := range dequeuedmessages {
 		fmt.Printf("Received message: %+v\n", message)
-		// jsonstr := `{
-		// 	"urlSource": "` + message.S3URI + `"
-		// }`
-		// fmt.Printf("json url str formated %s\n", jsonstr)
-		//var jsonStrbytes = []byte(jsonstr)
-		//var s3url = s3services.GetFilefroms3("ORIGINALPDF.pdf", "test123")
-		// fmt.Printf("MinistryRequestId: %s, RequestNumber: %s, Host: %s\n", message.MinistryRequestId,
-		// 	message.RequestNumber, message.DivisionName)
+
 		parsedURL, err := url.Parse(message.S3Uri)
 		if err != nil {
 			fmt.Printf("Error parsing URL: %v\n", err)

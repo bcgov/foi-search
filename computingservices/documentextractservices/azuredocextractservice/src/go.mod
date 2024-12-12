@@ -3,7 +3,6 @@ module azuredocextractservice
 go 1.23.3
 
 require (
-	github.com/Azure/go-amqp v1.2.0
 	github.com/aws/aws-sdk-go v1.55.5
 	github.com/spf13/viper v1.19.0
 )
