@@ -1,5 +1,5 @@
 kind: Template
-apiVersion: v1
+apiVersion: template.openshift.io/v1
 metadata:
   name: ${NAME}-build-template
   creationTimestamp: null
@@ -78,7 +78,7 @@ parameters:
     displayName: Namespace
     required: true
     description: The OpenShift namespace where the ImageStream resides.
-    value: fc7a67-dev
+    value: fc7a67-tools
   - name: OUTPUT_IMAGE_TAG
     displayName: Output Image Tag
     description: The tag given to the built image.

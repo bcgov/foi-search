@@ -3,7 +3,10 @@
     "authentication": {
       "class": "solr.BasicAuthPlugin",
       "blockUnknown": true,
-      "credentials":{"admin":" GENERATE PWD HASH using this util, https://clemente-biondo.github.io/"}, 
+      "credentials":{
+        "admin":" GENERATE PWD HASH using this util, https://clemente-biondo.github.io/",
+        "searchuser": " GENERATE PWD HASH using this util, https://clemente-biondo.github.io/"
+    }, 
       "realm":"FOI Solr users", 
       "forwardCredentials": false
     },
@@ -11,7 +14,8 @@
       "class": "solr.RuleBasedAuthorizationPlugin",
       "user-role": {
         "admin": ["admin"],
-        "user": ["read"]
+        "user": ["read"],
+        "searchuser": ["read", "searchuser"]
       },
       "permissions": [
         {
@@ -20,8 +24,9 @@
         },
         {
           "name": "read",
-          "role": "admin"
+          "role": ["admin","searchuser"]
         }
+        
       ]
     }
   }
