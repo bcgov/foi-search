@@ -4,6 +4,7 @@ import (
 	"azuredocextractservice/azureservices"
 	"azuredocextractservice/httpservices"
 	"azuredocextractservice/s3services"
+	"azuredocextractservice/types"
 	"fmt"
 	"log"
 	"net/url"
@@ -28,29 +29,47 @@ func main() {
 	for _, message := range dequeuedmessages {
 		fmt.Printf("Received message: %+v\n", message)
 
-		parsedURL, err := url.Parse(message.S3Uri)
-		if err != nil {
-			fmt.Printf("Error parsing URL: %v\n", err)
-			return
+		var requests []types.Requests = message.Requests
+
+		for _, request := range requests {
+			for _, document := range request.Documents {
+				var parsedURL = document.DocumentS3URL
+				var jsonStrbytes []byte = getBytesfromDocumentPath(parsedURL)
+				azureservices.CallAzureDocument(jsonStrbytes)
+			}
 		}
+
 		// Get the path after the hostname
-		path := strings.TrimPrefix(parsedURL.Path, "/")
-		bucketName, relativePath, found := strings.Cut(path, "/")
-		if !found {
-			fmt.Println("Invalid URL format")
-			return
-		}
-		fmt.Printf("Bucket: %s, Key: %s\n", bucketName, relativePath)
-		var s3url = s3services.GetFilefroms3(relativePath, bucketName)
-		jsonStr := `{
-			"urlSource": "` + s3url + `"
-		}`
-		var jsonStrbytes = []byte(jsonStr)
-		azureservices.CallAzureDocument(jsonStrbytes)
+
 		fmt.Printf("################-------------------------------####################")
 	}
 	end := time.Now()
 	fmt.Println("End Time :" + end.String())
 	total := end.Sub(start)
 	fmt.Println("Total time:" + total.String())
+}
+
+func getBytesfromDocumentPath(documenturlpath string) []byte {
+	//path := strings.TrimPrefix(documenturlpath, "/")
+	//bucketName, relativePath, found := strings.Cut(path, "/")
+	parsedURL, err := url.Parse(documenturlpath)
+	if err != nil {
+		fmt.Println("Error is parsing URL")
+		return nil
+	}
+	relativePath := parsedURL.Path
+	relativePath = strings.TrimPrefix(relativePath, "/")
+	bucketName, relativePath, found := strings.Cut(relativePath, "/")
+	if !found {
+		fmt.Println("Invalid URL format")
+		return nil
+	}
+	fmt.Printf("Bucket: %s, Key: %s\n", bucketName, relativePath)
+	var s3url = s3services.GetFilefroms3(relativePath, bucketName)
+	jsonStr := `{
+			"urlSource": "` + s3url + `"
+		}`
+	var jsonStrbytes = []byte(jsonStr)
+
+	return jsonStrbytes
 }

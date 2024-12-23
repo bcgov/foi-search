@@ -28,20 +28,20 @@ func NewAzureService(subscriptionKey string, baseURL string) *AzureService {
 }
 
 // CallAzureDocument initiates the document analysis request
-func (a *AzureService) AnalyzeAndExtractDocument(jsonPayload []byte) error {
+func (a *AzureService) AnalyzeAndExtractDocument(jsonPayload []byte) (map[string]interface{}, error) {
 	requestURL := fmt.Sprintf("%s/formrecognizer/documentModels/prebuilt-read:analyze?api-version=2023-07-31&stringIndexType=utf16CodeUnit", a.BaseURL)
 	// Send the POST request
 	apimRequestID, err := a.createAnalysisRequest(requestURL, jsonPayload)
 	if err != nil {
-		return fmt.Errorf("failed to initiate document analysis: %w", err)
+		return nil, fmt.Errorf("failed to initiate document analysis: %w", err)
 	}
 	results, err := a.getAnalysisResults(apimRequestID)
 	if err != nil {
-		return fmt.Errorf("failed to fetch analysis results: %w", err)
+		return nil, fmt.Errorf("failed to fetch analysis results: %w", err)
 	}
 	//Print extracted data form document
 	fmt.Printf("Analysis Results: %v\n", results)
-	return nil
+	return results, err
 }
 
 // sendAnalyzeRequest sends the initial analysis request to the Azure API
