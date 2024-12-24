@@ -58,10 +58,8 @@ func ProcessMessage() ([]types.QueueMessage, error) {
 // Fetches a message from the queue
 func fetchMessageFromQueue(url string) (*types.QueueMessage, error) {
 	fmt.Println("URL:", url)
-	//url = "https://activemq-fc7a67-dev.apps.gold.devops.gov.bc.ca/api/message?destination=queue://foidocextract&clientId=AZSLFDocExtract"
 	client := &http.Client{Timeout: 30 * time.Second}
 	req, err := http.NewRequest(http.MethodGet, url, nil)
-	//resp, err := http.Get("https://admin:F0!@activemq@dm1n@activemq-fc7a67-dev.apps.gold.devops.gov.bc.ca/api/message?destination=queue://foidocextract&clientId=AZSLFDocExtract")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
