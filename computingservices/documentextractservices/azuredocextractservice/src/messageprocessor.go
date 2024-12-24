@@ -35,7 +35,11 @@ func main() {
 			for _, document := range request.Documents {
 				var parsedURL = document.DocumentS3URL
 				var jsonStrbytes []byte = getBytesfromDocumentPath(parsedURL)
-				azureservices.CallAzureDocument(jsonStrbytes)
+				analysisResults, _analyzeerr := azureservices.CallAzureDocument(jsonStrbytes)
+				if _analyzeerr != nil {
+					//pUSH to solr.
+					//analysisResults.AnalyzeResult.Pages
+				}
 			}
 		}
 

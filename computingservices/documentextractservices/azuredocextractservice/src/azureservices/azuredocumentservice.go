@@ -1,11 +1,12 @@
 package azureservices
 
 import (
+	"azuredocextractservice/types"
 	"azuredocextractservice/utils"
 	"log"
 )
 
-func CallAzureDocument(jsonPayload []byte) (map[string]interface{}, error) {
+func CallAzureDocument(jsonPayload []byte) (types.AnalyzeResults, error) {
 	subscriptionKey := utils.ViperEnvVariable("azuresubcriptionkey")
 	baseURL := "https://foidocintelservice.cognitiveservices.azure.com"
 
