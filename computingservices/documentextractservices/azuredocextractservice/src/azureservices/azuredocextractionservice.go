@@ -1,6 +1,7 @@
 package azureservices
 
 import (
+	"azuredocextractservice/types"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -28,28 +29,27 @@ func NewAzureService(subscriptionKey string, baseURL string) *AzureService {
 }
 
 // CallAzureDocument initiates the document analysis request
-func (a *AzureService) AnalyzeAndExtractDocument(jsonPayload []byte) error {
+func (a *AzureService) AnalyzeAndExtractDocument(jsonPayload []byte) (types.AnalyzeResults, error) {
+	var results types.AnalyzeResults
 	requestURL := fmt.Sprintf("%s/formrecognizer/documentModels/prebuilt-read:analyze?api-version=2023-07-31&stringIndexType=utf16CodeUnit", a.BaseURL)
 	// Send the POST request
 	apimRequestID, err := a.createAnalysisRequest(requestURL, jsonPayload)
 	if err != nil {
-		return fmt.Errorf("failed to initiate document analysis: %w", err)
+		return results, fmt.Errorf("failed to initiate document analysis: %w", err)
 	}
-	results, err := a.getAnalysisResults(apimRequestID)
+	results, err = a.getAnalysisResults(apimRequestID)
 	if err != nil {
-		return fmt.Errorf("failed to fetch analysis results: %w", err)
+		return results, fmt.Errorf("failed to fetch analysis results: %w", err)
 	}
 	//Print extracted data form document
 	fmt.Printf("Analysis Results: %v\n", results)
-	return nil
+	return results, err
 }
 
 // sendAnalyzeRequest sends the initial analysis request to the Azure API
 func (a *AzureService) createAnalysisRequest(requestURL string, jsonPayload []byte) (string, error) {
-	req, err := http.NewRequest(http.MethodPost, requestURL, bytes.NewBuffer(jsonPayload))
-	if err != nil {
-		return "", fmt.Errorf("failed to create POST request: %w", err)
-	}
+
+	req, _ := http.NewRequest(http.MethodPost, requestURL, bytes.NewBuffer(jsonPayload))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Ocp-Apim-Subscription-Key", a.SubscriptionKey)
 	res, err := a.Client.Do(req)
@@ -57,106 +57,68 @@ func (a *AzureService) createAnalysisRequest(requestURL string, jsonPayload []by
 		return "", fmt.Errorf("error making HTTP request: %w", err)
 	}
 	defer res.Body.Close()
-	if res.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("unexpected response status: %s", res.Status)
-	}
 	apimRequestID := res.Header.Get("Apim-Request-Id")
+
 	if apimRequestID == "" {
 		return "", fmt.Errorf("missing Apim-Request-Id in response header")
 	}
 	return apimRequestID, nil
 }
 
-func (a *AzureService) getAnalysisResults(apimRequestID string) (map[string]interface{}, error) {
+func (a *AzureService) getAnalysisResults(apimRequestID string) (types.AnalyzeResults, error) {
 	extractReqURL := fmt.Sprintf(
 		"%s/formrecognizer/documentModels/prebuilt-read/analyzeResults/%s?api-version=2023-07-31",
 		a.BaseURL, apimRequestID,
 	)
+
 	for {
 		time.Sleep(1 * time.Second)
-		jsonResponse, err := a.getExtractedResults(extractReqURL)
+		result, err := a.getExtractedResults(extractReqURL)
 		if err != nil {
-			return nil, err
+			return result, err
 		}
-		status, ok := jsonResponse["status"].(string)
-		if !ok {
-			return nil, fmt.Errorf("missing or invalid 'status' in response")
-		}
-		fmt.Printf("Current status: %s\n", status)
+
+		status := result.Status
+		fmt.Printf("Current status: %s\n", result.Status)
 		switch status {
 		case "succeeded":
-			return jsonResponse, nil
+			return result, nil
 		case "running":
 			continue
 		default:
-			return nil, fmt.Errorf("analysis failed with status: %s", status)
+			return result, fmt.Errorf("analysis failed with status: %s", status)
 		}
 	}
 }
 
 // Helper function to perform the HTTP GET request and parse the JSON response
-func (a *AzureService) getExtractedResults(url string) (map[string]interface{}, error) {
+func (a *AzureService) getExtractedResults(url string) (types.AnalyzeResults, error) {
+	var result types.AnalyzeResults
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create GET request: %w", err)
+		return result, fmt.Errorf("failed to create GET request: %w", err)
 	}
 	req.Header.Set("Ocp-Apim-Subscription-Key", a.SubscriptionKey)
 	res, err := a.Client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("error making HTTP request: %w", err)
+		return result, fmt.Errorf("error making HTTP request: %w", err)
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected response status: %s", res.Status)
+		return result, fmt.Errorf("unexpected response status: %s", res.Status)
 	}
 	bodyBytes, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, fmt.Errorf("error reading response body: %w", err)
+		return result, fmt.Errorf("error reading response body: %w", err)
 	}
+	fmt.Println("Response Body starts here:")
+	fmt.Println(string(bodyBytes))
+	fmt.Println("Response Body ends here:")
 	var jsonResponse map[string]interface{}
-	err = json.Unmarshal(bodyBytes, &jsonResponse)
+	json.Unmarshal(bodyBytes, &jsonResponse)
+	err = json.Unmarshal(bodyBytes, &result)
 	if err != nil {
-		return nil, fmt.Errorf("error unmarshaling response body: %w", err)
+		return result, fmt.Errorf("error unmarshaling response body: %w", err)
 	}
-	return jsonResponse, nil
+	return result, nil
 }
-
-// pollAnalysisResults polls the Azure API for analysis results
-// func (a *AzureService) getAnalysisResults(apimRequestID string) (map[string]interface{}, error) {
-// 	extractReqURL := fmt.Sprintf("%s/formrecognizer/documentModels/prebuilt-read/analyzeResults/%s?api-version=2023-07-31", a.BaseURL, apimRequestID)
-// 	for {
-// 		time.Sleep(1 * time.Second)
-// 		req, err := http.NewRequest(http.MethodGet, extractReqURL, nil)
-// 		if err != nil {
-// 			return nil, fmt.Errorf("failed to create GET request: %w", err)
-// 		}
-// 		req.Header.Set("Ocp-Apim-Subscription-Key", a.SubscriptionKey)
-// 		res, err := a.Client.Do(req)
-// 		if err != nil {
-// 			return nil, fmt.Errorf("error making HTTP request: %w", err)
-// 		}
-// 		defer res.Body.Close()
-// 		if res.StatusCode != http.StatusOK {
-// 			return nil, fmt.Errorf("unexpected response status: %s", res.Status)
-// 		}
-// 		bodyBytes, err := io.ReadAll(res.Body)
-// 		if err != nil {
-// 			return nil, fmt.Errorf("error reading response body: %w", err)
-// 		}
-// 		var jsonResponse map[string]interface{}
-// 		err = json.Unmarshal(bodyBytes, &jsonResponse)
-// 		if err != nil {
-// 			return nil, fmt.Errorf("error unmarshaling response body: %w", err)
-// 		}
-// 		status, ok := jsonResponse["status"].(string)
-// 		if !ok {
-// 			return nil, fmt.Errorf("missing or invalid status in response")
-// 		}
-// 		fmt.Printf("Current status: %s\n", status)
-// 		if status == "succeeded" {
-// 			return jsonResponse, nil
-// 		} else if status != "running" {
-// 			return nil, fmt.Errorf("analysis failed with status: %s", status)
-// 		}
-// 	}
-// }

@@ -1,5 +1,5 @@
 kind: Template
-apiVersion: v1
+apiVersion: template.openshift.io/v1
 metadata:
   name: ${NAME}-deployment-template
 objects:
@@ -46,15 +46,15 @@ objects:
       resources:
         requests:
           storage: ${PERSISTENT_VOLUME_SIZE}
-  - kind: DeploymentConfig
-    apiVersion: v1
+  - kind: Deployment
+    apiVersion: apps/v1
     metadata:
       name: ${NAME}
       labels:
         app: ${NAME}
     spec:
       strategy:
-        type: Rolling
+        type: RollingUpdate
         rollingParams:
           updatePeriodSeconds: 1
           intervalSeconds: 1
@@ -73,12 +73,12 @@ objects:
               namespace: ${IMAGE_NAMESPACE}
               name: ${NAME}:${TAG_NAME}
             lastTriggeredImage: >-
-              image-registry.openshift-image-registry.svc:5000/fc7a67-dev/solr@sha256:f700818fa3acef1b90d27442fc7ffc5ec2855d24a554ce0b599e7918eb7bbff3
+              image-registry.openshift-image-registry.svc:5000/${IMAGE_NAMESPACE}/${TAG_NAME}
       replicas: 1
       test: false
       selector:
-        app: ${NAME}
-        deploymentconfig: ${NAME}
+        matchLabels:
+          app: ${NAME}
       template:
         metadata:
           labels:
@@ -90,7 +90,8 @@ objects:
               persistentVolumeClaim:
                 claimName: ${NAME}
           containers:
-            - name: ${NAME}              
+            - image: image-registry.openshift-image-registry.svc:5000/${IMAGE_NAMESPACE}/${NAME}:${TAG_NAME}
+              name: ${NAME}              
               ports:
                 - containerPort: 8983
                   protocol: TCP
@@ -117,11 +118,11 @@ parameters:
     displayName: Image Namespace
     required: true
     description: The namespace of the OpenShift project containing the imagestream for the application.
-    value: fc7a67-dev
+    value: fc7a67-tools
   - name: TAG_NAME
     displayName: Environment TAG name
     description: The TAG name for this environment, e.g., dev, test, prod
-    value: dev
+    value: prod
     required: true
   - name: APPLICATION_DOMAIN
     displayName: Application Hostname
@@ -131,7 +132,7 @@ parameters:
     displayName: Persistent Volume Size
     description: The size of the persistent volume , e.g. 512Mi, 1Gi, 2Gi.
     required: true
-    value: 512Mi
+    value: 1Gi
   - name: MOUNT_PATH
     displayName: Mount Path
     description: The path to mount the persistent volume.
