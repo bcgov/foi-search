@@ -17,12 +17,15 @@ import (
 var activeMQBaseURL = utils.ViperEnvVariable("activeMQBaseURL")
 var username = utils.ViperEnvVariable("activeMQUserName")
 var password = utils.ViperEnvVariable("activeMQPassword")
+var queuename = utils.ViperEnvVariable("focdocextractqueue")
+var activemqclientid = utils.ViperEnvVariable("activemqclientid")
 
 // ProcessMessage fetches messages from the ActiveMQ queue using HTTP
 func ProcessMessage() ([]types.QueueMessage, error) {
-	queueName := "queuetest"
+	queueName := queuename
+	clientid := activemqclientid
 	// Construct the URL to fetch messages from the queue
-	url := fmt.Sprintf("%s/%s?type=queue", activeMQBaseURL, queueName)
+	url := fmt.Sprintf("%s://%s&clientId=%s", activeMQBaseURL, queueName, clientid)
 	messages := []types.QueueMessage{}
 	timeoutCounter := 0
 	maxTimeouts := 1
@@ -45,7 +48,7 @@ func ProcessMessage() ([]types.QueueMessage, error) {
 			fmt.Println("No more messages in the queue. Exiting...")
 			break
 		}
-		fmt.Printf("Extracted s3uri: %s\n", message.S3Uri)
+		fmt.Printf("Extracted s3uri: %s\n", message.BatchID)
 		messages = append(messages, *message)
 	}
 	fmt.Println("All messages processed. Exiting.")
@@ -86,7 +89,7 @@ func fetchMessageFromQueue(url string) (*types.QueueMessage, error) {
 	}
 	fmt.Printf("Response Body: %s\n", string(body))
 	var message types.QueueMessage
-	if err := json.Unmarshal(body, &message); err != nil {
+	if err := json.Unmarshal([]byte(body), &message); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal message: %w", err)
 	}
 	return &message, nil
