@@ -4,10 +4,12 @@ import (
 	"azuredocextractservice/azureservices"
 	"azuredocextractservice/httpservices"
 	"azuredocextractservice/s3services"
+	"azuredocextractservice/solrsearchservices"
 	"azuredocextractservice/types"
 	"fmt"
 	"log"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -36,9 +38,30 @@ func main() {
 				var parsedURL = document.DocumentS3URL
 				var jsonStrbytes []byte = getBytesfromDocumentPath(parsedURL)
 				analysisResults, _analyzeerr := azureservices.CallAzureDocument(jsonStrbytes)
-				if _analyzeerr != nil {
+				if _analyzeerr == nil && analysisResults.Status == "succeeded" {
+
+					searchdocumentpagelines := []types.SOLRSearchDocument{}
 					//pUSH to solr.
-					//analysisResults.AnalyzeResult.Pages
+					for _, page := range analysisResults.AnalyzeResult.Pages {
+						for _, line := range page.Lines {
+							_solrsearchdocuemnt := types.SOLRSearchDocument{
+								FoiDocumentID:         strconv.Itoa(int(document.DocumentID)),
+								FoiRequestNumber:      request.RequestNumber,
+								FoiMinistryRequestID:  request.MinistryRequestID,
+								FoiMinistryCode:       request.MinistryCode,
+								FoiDocumentFileName:   document.DocumentName,
+								FoiDocumentPageNumber: page.PageNumber,
+								FoiDocumentSentence:   line.Content,
+								FoiRequestMiscInfo:    document.DocumentS3URL,
+							}
+							searchdocumentpagelines = append(searchdocumentpagelines, _solrsearchdocuemnt)
+							fmt.Println(_solrsearchdocuemnt.FoiDocumentFileName)
+						}
+
+					}
+
+					solrsearchservices.PushtoSolr(searchdocumentpagelines)
+
 				}
 			}
 		}
