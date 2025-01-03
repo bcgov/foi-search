@@ -447,6 +447,7 @@
       <tokenizer name="whitespace"/>
     </analyzer>
   </fieldType>
+  <fieldType name="date" class="solr.DatePointField" docValues="true"/>
   <field name="foirequestnumber" type="text_general"/>
   <field name="foiministryrequestid" type="plongs"/>
   <field name="foiministrycode" type="text_general"/>
@@ -456,6 +457,10 @@
   <field name="foidocumentsentence" type="text_general"/>
   <field name="foidocumentsentenceId" type="text_general"/>
   <field name="foirequestmiscinfo" type="text_general"/>
+  <field name="foidocumenturl" type="text_general"/>
+  <field name="foirequestreceiveddate" type="date" indexed="true" stored="true" required="false"/>
+  <field name="foirequesttype" type="text_general"/>
+  <field name="foirequestpublicbody" type="text_general"/>
   <field name="_nest_path_" type="_nest_path_"/>
   <field name="_root_" type="string" docValues="false" indexed="true" stored="false"/>
   <field name="_text_" type="text_general" multiValued="true" indexed="true" stored="false"/>
