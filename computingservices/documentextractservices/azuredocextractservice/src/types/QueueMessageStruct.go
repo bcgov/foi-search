@@ -20,6 +20,7 @@ type Requests struct {
 	RequestType       string      `json:"RequestType"`
 	MinistryCode      string      `json:"MinistryCode"`
 	ReceivedDate      string      `json:"ReceivedDate"`
+	RequestMiscInfo   string      `json:"RequestMiscInfo"`
 	Documents         []Documents `json:"Documents"`
 }
 

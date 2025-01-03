@@ -44,15 +44,22 @@ func main() {
 					//pUSH to solr.
 					for _, page := range analysisResults.AnalyzeResult.Pages {
 						for _, line := range page.Lines {
+							receviedDate, timeparseerror := time.Parse(time.RFC3339, request.ReceivedDate)
+							if timeparseerror != nil {
+								fmt.Println("Error parsing custom date-time:", timeparseerror)
+							}
 							_solrsearchdocuemnt := types.SOLRSearchDocument{
-								FoiDocumentID:         strconv.Itoa(int(document.DocumentID)),
-								FoiRequestNumber:      request.RequestNumber,
-								FoiMinistryRequestID:  request.MinistryRequestID,
-								FoiMinistryCode:       request.MinistryCode,
-								FoiDocumentFileName:   document.DocumentName,
-								FoiDocumentPageNumber: page.PageNumber,
-								FoiDocumentSentence:   line.Content,
-								FoiRequestMiscInfo:    document.DocumentS3URL,
+								FoiDocumentID:          strconv.Itoa(int(document.DocumentID)),
+								FoiRequestNumber:       request.RequestNumber,
+								FoiMinistryRequestID:   request.MinistryRequestID,
+								FoiMinistryCode:        request.MinistryCode,
+								FoiDocumentFileName:    document.DocumentName,
+								FoiDocumentPageNumber:  page.PageNumber,
+								FoiDocumentSentence:    line.Content,
+								FoiRequestMiscInfo:     request.RequestMiscInfo,
+								FoiRequestReceivedDate: receviedDate,
+								FoiDocumentURL:         document.DocumentS3URL,
+								FoiRequestType:         request.RequestType,
 							}
 							searchdocumentpagelines = append(searchdocumentpagelines, _solrsearchdocuemnt)
 							fmt.Println(_solrsearchdocuemnt.FoiDocumentFileName)
