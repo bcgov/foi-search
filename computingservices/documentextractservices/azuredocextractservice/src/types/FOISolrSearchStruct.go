@@ -3,6 +3,7 @@ package types
 import "time"
 
 type SOLRSearchDocument struct {
+	Foisolrid              string    `json:"id"`
 	FoiDocumentID          string    `json:"foidocumentid"`
 	FoiRequestNumber       string    `json:"foirequestnumber"`
 	FoiMinistryRequestID   string    `json:"foiministryrequestid"`
