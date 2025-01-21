@@ -39,7 +39,7 @@ func main() {
 			for _, document := range request.Documents {
 				var parsedURL = document.DocumentS3URL
 				var jsonStrbytes []byte = getBytesfromDocumentPath(parsedURL)
-				analysisResults, _analyzeerr := azureservices.CallAzureDocument(jsonStrbytes)
+				analysisResults, _analyzeerr := azureservices.CallAzureDocument(jsonStrbytes, document, request)
 				if _analyzeerr == nil && analysisResults.Status == "succeeded" {
 
 					searchdocumentpagelines := []types.SOLRSearchDocument{}
