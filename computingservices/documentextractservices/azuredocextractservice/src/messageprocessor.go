@@ -65,6 +65,7 @@ func main() {
 								FoiDocumentURL:         document.DocumentS3URL,
 								FoiRequestType:         request.RequestType,
 							}
+
 							searchdocumentpagelines = append(searchdocumentpagelines, _solrsearchdocuemnt)
 							fmt.Println(_solrsearchdocuemnt.FoiDocumentFileName)
 						}
@@ -72,6 +73,11 @@ func main() {
 					}
 
 					solrsearchservices.PushtoSolr(searchdocumentpagelines)
+					eventgridmessages := transformToEventGridMessages(searchdocumentpagelines)
+					go azureservices.PushtoEventGrid(eventgridmessages)
+
+					// Give time(1 sec below) for goroutine to execute before the program exits
+					time.Sleep(1 * time.Second)
 
 				}
 			}
@@ -110,4 +116,22 @@ func getBytesfromDocumentPath(documenturlpath string) []byte {
 	var jsonStrbytes = []byte(jsonStr)
 
 	return jsonStrbytes
+}
+
+// Function to transform SOLRSearchDocument array to AzureEventGridMessage array
+func transformToEventGridMessages(solrDocs []types.SOLRSearchDocument) []types.AzureEventGridMessage {
+	var eventGridMessages []types.AzureEventGridMessage
+
+	for _, doc := range solrDocs {
+		eventGridMessages = append(eventGridMessages, types.AzureEventGridMessage{
+			Foisolrid:             doc.Foisolrid,
+			FoiDocumentID:         doc.FoiDocumentID,
+			FoiRequestNumber:      doc.FoiRequestNumber,
+			FoiMinistryRequestID:  doc.FoiMinistryRequestID,
+			FoiDocumentPageNumber: doc.FoiDocumentPageNumber,
+			FoiDocumentURL:        doc.FoiDocumentURL,
+		})
+	}
+
+	return eventGridMessages
 }
