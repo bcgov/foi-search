@@ -1,12 +1,14 @@
 package azureservices
 
 import (
+	"azuredocextractservice/docreviewerauditservice"
 	"azuredocextractservice/types"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -29,15 +31,19 @@ func NewAzureService(subscriptionKey string, baseURL string) *AzureService {
 }
 
 // CallAzureDocument initiates the document analysis request
-func (a *AzureService) AnalyzeAndExtractDocument(jsonPayload []byte) (types.AnalyzeResults, error) {
+func (a *AzureService) AnalyzeAndExtractDocument(jsonPayload []byte, document types.Documents, request types.Requests) (types.AnalyzeResults, error) {
+
 	var results types.AnalyzeResults
 	requestURL := fmt.Sprintf("%s/formrecognizer/documentModels/prebuilt-read:analyze?api-version=2023-07-31&stringIndexType=utf16CodeUnit", a.BaseURL)
 	// Send the POST request
 	apimRequestID, err := a.createAnalysisRequest(requestURL, jsonPayload)
 	if err != nil {
 		return results, fmt.Errorf("failed to initiate document analysis: %w", err)
+	} else {
+		wrapDocReviewerAudit(document.DocumentID, request.MinistryRequestID, apimRequestID, "azureextractrequestcreated")
 	}
-	results, err = a.getAnalysisResults(apimRequestID)
+
+	results, err = a.getAnalysisResults(apimRequestID, document.DocumentID, request.MinistryRequestID)
 	if err != nil {
 		return results, fmt.Errorf("failed to fetch analysis results: %w", err)
 	}
@@ -65,7 +71,7 @@ func (a *AzureService) createAnalysisRequest(requestURL string, jsonPayload []by
 	return apimRequestID, nil
 }
 
-func (a *AzureService) getAnalysisResults(apimRequestID string) (types.AnalyzeResults, error) {
+func (a *AzureService) getAnalysisResults(apimRequestID string, documentid int64, ministryrequestid string) (types.AnalyzeResults, error) {
 	extractReqURL := fmt.Sprintf(
 		"%s/formrecognizer/documentModels/prebuilt-read/analyzeResults/%s?api-version=2023-07-31",
 		a.BaseURL, apimRequestID,
@@ -82,10 +88,13 @@ func (a *AzureService) getAnalysisResults(apimRequestID string) (types.AnalyzeRe
 		fmt.Printf("Current status: %s\n", result.Status)
 		switch status {
 		case "succeeded":
+			wrapDocReviewerAudit(documentid, ministryrequestid, apimRequestID, "extractionsucceeded")
 			return result, nil
 		case "running":
+			wrapDocReviewerAudit(documentid, ministryrequestid, apimRequestID, "extractionjobrunning")
 			continue
 		default:
+			wrapDocReviewerAudit(documentid, ministryrequestid, apimRequestID, "extractionjobfailed")
 			return result, fmt.Errorf("analysis failed with status: %s", status)
 		}
 	}
@@ -121,4 +130,15 @@ func (a *AzureService) getExtractedResults(url string) (types.AnalyzeResults, er
 		return result, fmt.Errorf("error unmarshaling response body: %w", err)
 	}
 	return result, nil
+}
+
+func wrapDocReviewerAudit(documentid int64, ministryrequestidrequest string, apimRequestID string, status string) bool {
+	ministryrequestid, minreqidconerr := strconv.ParseInt(ministryrequestidrequest, 10, 64)
+	if minreqidconerr != nil {
+		fmt.Sprint("Error while converting ministry request ID")
+	}
+	docreviewaudit := types.DocReviewAudit{DocumentID: documentid, MinistryRequestID: ministryrequestid,
+		Description: fmt.Sprintf(`{apimRequestID:%v}`, apimRequestID), Status: status}
+	returnstate := docreviewerauditservice.PushtoDocReviewer(docreviewaudit)
+	return returnstate
 }

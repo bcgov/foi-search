@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type AzureExtract struct {
@@ -37,7 +39,7 @@ func main() {
 			for _, document := range request.Documents {
 				var parsedURL = document.DocumentS3URL
 				var jsonStrbytes []byte = getBytesfromDocumentPath(parsedURL)
-				analysisResults, _analyzeerr := azureservices.CallAzureDocument(jsonStrbytes)
+				analysisResults, _analyzeerr := azureservices.CallAzureDocument(jsonStrbytes, document, request)
 				if _analyzeerr == nil && analysisResults.Status == "succeeded" {
 
 					searchdocumentpagelines := []types.SOLRSearchDocument{}
@@ -48,7 +50,9 @@ func main() {
 							if timeparseerror != nil {
 								fmt.Println("Error parsing custom date-time:", timeparseerror)
 							}
+							newUUID := uuid.New()
 							_solrsearchdocuemnt := types.SOLRSearchDocument{
+								Foisolrid:              newUUID.String(),
 								FoiDocumentID:          strconv.Itoa(int(document.DocumentID)),
 								FoiRequestNumber:       request.RequestNumber,
 								FoiMinistryRequestID:   request.MinistryRequestID,
