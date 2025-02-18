@@ -1,28 +1,29 @@
 @description('Array of Network Interface configurations')
-param nicConfigs array
+param nicConfig object
 
 @description('The location where all NICs will be deployed')
 param location string
 
-resource nics 'Microsoft.Network/networkInterfaces@2024-03-01' = [for nic in nicConfigs: {
-  name: nic.name
+param subnetId string
+
+resource nics 'Microsoft.Network/networkInterfaces@2024-03-01' = {
+  name: nicConfig.name
   location: location
-  tags: nic.tags
   properties: {
     ipConfigurations: [
       {
-        name: nic.ipConfig.name
+        name: nicConfig.ipConfig.name
         properties: {
-          privateIPAllocationMethod: nic.ipConfig.privateIPAllocationMethod
+          privateIPAllocationMethod: nicConfig.ipConfig.privateIPAllocationMethod
           subnet: {
-            id: nic.ipConfig.subnetId
+            id: subnetId
           }
-          primary: nic.ipConfig.primary
-          privateIPAddressVersion: nic.ipConfig.privateIPAddressVersion
+          primary: nicConfig.ipConfig.primary
+          privateIPAddressVersion: nicConfig.ipConfig.privateIPAddressVersion
         }
       }
     ]
-    enableAcceleratedNetworking: nic.enableAcceleratedNetworking
+    enableAcceleratedNetworking: nicConfig.enableAcceleratedNetworking
   }
-}]
+}
 
