@@ -1,6 +1,7 @@
 // Name of the Azure Bastion host
 param bastionConfig object
 param publicIpConfig object
+param bastionName string
 
 // Deployment location
 param location string
@@ -22,7 +23,7 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@2024-05-01' = {
 
 // Azure Bastion host resource
 resource bastion 'Microsoft.Network/bastionHosts@2024-05-01' = {
-  name: bastionConfig.name
+  name: bastionName
   location: location
   sku: {
     name: bastionConfig.skuName
@@ -33,7 +34,6 @@ resource bastion 'Microsoft.Network/bastionHosts@2024-05-01' = {
       {
         name: 'IpConf'
         properties: {
-          privateIPAllocationMethod: 'Dynamic'
           publicIPAddress: {
             id: publicIp.id // Dynamically references Public IP resource
           }

@@ -1,17 +1,23 @@
-@description('The name of the virtual network')
+// Parameter for the name of the virtual network
 param vnetName string
 
-@description('Array of subnets with offset and mask')
+// Parameter for an array of subnets with necessary details like offset and mask
 param subnets array
 
-param nsgMapping object
+// Parameter for an array of NSG configurations
+param nsgArray array
 
-// Reference existing VNet
+// Create a mapping of NSGs to their respective IDs
+var nsgMapping = reduce(nsgArray, {}, (cur, next) => union(cur, {
+  '${next.nsgName}': next.id
+}))
+
+// Reference the existing virtual network
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-05-01' existing = {
   name: vnetName
 }
 
-// Update the subnets array with the correct NSG ID
+// Process and update subnets with corresponding NSG IDs
 var updatedSubnets = [
   for subnet in subnets: {
     name: subnet.name
@@ -24,29 +30,27 @@ var updatedSubnets = [
   }
 ]
 
-// Extract base IP from VNet's address space
-// Access the first address space in the array
+// Extract the base IP address from the address space of the VNet
 var addressSpace = virtualNetwork.properties.addressSpace.addressPrefixes[0]
 var cidrParts = split(addressSpace, '/')
 var baseIP = cidrParts[0]
 var ipOctets = split(baseIP, '.')
 
-
-// Add subnets
+// Create subnets based on the updated subnet configurations
 resource subnetDeployment 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' = [for subnet in updatedSubnets: {
   parent: virtualNetwork
   name: subnet.name
   properties: {
-            addressPrefix: '${ipOctets[0]}.${ipOctets[1]}.${ipOctets[2]}.${int(ipOctets[3]) + subnet.offset}/${subnet.mask}'
-            networkSecurityGroup: {
-              id: subnet.networkSecurityGroupId // Associate an NSG to the subnet
-            }
-            serviceEndpoints: subnet.serviceEndpoints // Define service endpoints (if any)
-            privateEndpointNetworkPolicies: subnet.privateEndpointNetworkPolicies // Configure private endpoint policies
-            privateLinkServiceNetworkPolicies: subnet.privateLinkServiceNetworkPolicies // Configure private link service policies
-          }
+    // Calculate the subnet address range using the base IP and subnet offset/mask
+    addressPrefix: '${ipOctets[0]}.${ipOctets[1]}.${ipOctets[2]}.${int(ipOctets[3]) + subnet.offset}/${subnet.mask}'
+    networkSecurityGroup: {
+      id: subnet.networkSecurityGroupId // Assign NSG ID to the subnet
+    }
+    serviceEndpoints: subnet.serviceEndpoints // Attach any service endpoints to the subnet
+    privateEndpointNetworkPolicies: subnet.privateEndpointNetworkPolicies // Define private endpoint policies
+    privateLinkServiceNetworkPolicies: subnet.privateLinkServiceNetworkPolicies // Define private link service policies
+  }
 }]
 
-
-@description('The resource ID of the virtual network')
+// Output the virtual network ID
 output vnetId string = virtualNetwork.id
