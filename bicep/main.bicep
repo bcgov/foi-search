@@ -1,13 +1,18 @@
 @description('Main deployment parameters')
+param subId string
 
-param subscription object
+param licencePlate string
+
+param environment string
+
+param resourceGroup string = '${licencePlate}-${environment}-networking'
 
 // Netwrk Security groups (nsg) parameters
 param nsgConfigs array
 
 // vnet parameters
 
-param vnetName string
+param vnetName string = '${licencePlate}-${environment}-vwan-spoke'
 
 @description('Array of subnets with offset and mask')
 param subnets array
@@ -20,34 +25,32 @@ param asgName string
 @description('The location where the ASG will be created')
 param location string
 
-@description('Tags to be applied to the ASG')
-param tags object
-
 // nic Parameter
 
 @description('nicConfig')
 param nicConfig object
 param vmSubnetName string
 
-
 //doc Intel
-param docIntel object
+param docIntelName string = 'foidocintelservice-${environment}'
+param docIntelConfig object
 
 //vmConfig
 
 param vmConfig object
 @secure()
-param vmAdminPassword string 
+param vmAdminPassword string
+param vmAdminUsername string
 
 //pe config
 param peConfig object
 param docIntelSubnet string
 
 // bastion config
+param bastionName string = '${licencePlate}-${environment}-vwan-spoke-bastion'
 param bastionConfig object
 param bastionSubnet string
 param publicIpConfig object
-
 
 module nsgs 'modules/nsgs.bicep' = {
   name: 'nsgsDeployment'
@@ -56,48 +59,39 @@ module nsgs 'modules/nsgs.bicep' = {
   }
 }
 
-// Map NSGs to IDs
-var nsgMapping = reduce(nsgs.outputs.nsgs, {}, (cur, next) => union(cur, {
-  '${next.nsgName}': next.id
-}))
-
-
-
 module vnet 'modules/vnet.bicep' = {
   name: 'vnetDeployment'
   params: {
     vnetName: vnetName
     subnets: subnets
-    nsgMapping: nsgMapping
+    nsgArray: nsgs.outputs.nsgs
   }
   dependsOn: [nsgs]
 }
 
 module asg 'modules/asg.bicep' = {
   name: 'asgDeployment'
-  params: { 
-    asgName: asgName 
-    location: location 
-    tags: tags 
+  params: {
+    asgName: asgName
+    location: location
   }
   dependsOn: [vnet]
 }
 
-
-
 module nic 'modules/nic.bicep' = {
   name: 'nicDeployment'
-  params:{
+  params: {
     location: location
     nicConfig: nicConfig
-    subnetId: '/subscriptions/${subscription.sub_id}/resourceGroups/${subscription.resourceGroup}/providers/Microsoft.Network/virtualNetworks/${vnetName}/subnets/${vmSubnetName}'
+    subnetId: '/subscriptions/${subId}/resourceGroups/${subId}/providers/Microsoft.Network/virtualNetworks/${vnetName}/subnets/${vmSubnetName}'
   }
-  dependsOn: [
-    vnet
-  ]
-  }
+  dependsOn: [vnet]
+}
 
-module documentIntelligence 'modules/docIntel.bicep' = {name: 'docIntelDeployment', params:{docIntel:docIntel, location:location}}
+module documentIntelligence 'modules/docIntel.bicep' = {
+  name: 'docIntelDeployment'
+  params: { docIntelConfig: docIntelConfig, location: location , docIntelName: docIntelName}
+}
 
 module vm 'modules/vm.bicep' = {
   name: 'vmDeployment'
@@ -105,7 +99,8 @@ module vm 'modules/vm.bicep' = {
     location: location
     vmConfig: vmConfig
     adminPassword: vmAdminPassword
-    networkInterfaceId: '/subscriptions/${subscription.sub_id}/resourceGroups/${subscription.resourceGroup}/providers/Microsoft.Network/networkInterfaces/${nicConfig.name}'
+    adminUsername: vmAdminUsername
+    networkInterfaceId: '/subscriptions/${subId}/resourceGroups/${resourceGroup}/providers/Microsoft.Network/networkInterfaces/${nicConfig.name}'
   }
   dependsOn: [nic]
 }
@@ -114,14 +109,16 @@ module privateEndpoint 'modules/pvt-ep.bicep' = {
   name: 'privateEndpoinDeployment'
   params: {
     location: location
-    applicationSecurityGroups: [{
-      id: '/subscriptions/${subscription.sub_id}/resourceGroups/${subscription.resourceGroup}/providers/Microsoft.Network/applicationSecurityGroups/${asgName}'
-    }]
+    applicationSecurityGroups: [
+      {
+        id: '/subscriptions/${subId}/resourceGroups/${resourceGroup}/providers/Microsoft.Network/applicationSecurityGroups/${asgName}'
+      }
+    ]
     peConfig: peConfig
-    privateLinkServiceId: '/subscriptions/${subscription.sub_id}/resourceGroups/${subscription.resourceGroup}/providers/Microsoft.CognitiveServices/accounts/${docIntel.name}'
-    subnetId: '/subscriptions/${subscription.sub_id}/resourceGroups/${subscription.resourceGroup}/providers/Microsoft.Network/virtualNetworks/${vnetName}/subnets/${docIntelSubnet}'
+    privateLinkServiceId: '/subscriptions/${subId}/resourceGroups/${resourceGroup}/providers/Microsoft.CognitiveServices/accounts/${docIntelConfig.name}'
+    subnetId: '/subscriptions/${subId}/resourceGroups/${resourceGroup}/providers/Microsoft.Network/virtualNetworks/${vnetName}/subnets/${docIntelSubnet}'
   }
-  dependsOn:[vnet, nic, documentIntelligence]
+  dependsOn: [vnet, nic, documentIntelligence]
 }
 
 module bastion 'modules/bastion.bicep' = {
@@ -129,10 +126,9 @@ module bastion 'modules/bastion.bicep' = {
   params: {
     location: location
     bastionConfig: bastionConfig
+    bastionName: bastionName
     publicIpConfig: publicIpConfig
-    subnetId: '/subscriptions/${subscription.sub_id}/resourceGroups/${subscription.resourceGroup}/providers/Microsoft.Network/virtualNetworks/${vnetName}/subnets/${bastionSubnet}'
+    subnetId: '/subscriptions/${subId}/resourceGroups/${resourceGroup}/providers/Microsoft.Network/virtualNetworks/${vnetName}/subnets/${bastionSubnet}'
   }
   dependsOn: [vnet]
 }
-  
-
