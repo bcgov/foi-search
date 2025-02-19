@@ -1,0 +1,25 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "peConfig": {
+      "value": {
+        "name": "foidocintelprivateendpoint",
+        "groupIds": ["account"],
+        "customNetworkInterfaceName": "foidocintelprivateendpoint-nic"
+      }
+    },
+    "location": {
+      "value": "canadacentral"
+    },
+    "subnetId": {
+      "value": "/subscriptions/xxxx/resourceGroups/xxxx/providers/Microsoft.Network/virtualNetworks/xxxx/subnets/xxxx"
+    },
+    "privateLinkServiceId": {
+      "value": "/subscriptions/xxxx/resourceGroups/xxxx/providers/Microsoft.CognitiveServices/accounts/foidocintelservice-prod"
+    },
+    "applicationSecurityGroups": {
+      "value": []
+    }
+  }
+}

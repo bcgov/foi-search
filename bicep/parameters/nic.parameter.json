@@ -1,0 +1,24 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "nicConfig": {
+      "value": {
+        "name": "<config-name>",
+        "ipConfig": {
+          "name": "ipconfig1",
+          "privateIPAllocationMethod": "Dynamic",
+          "primary": true,
+          "privateIPAddressVersion": "IPv4"
+        },
+        "enableAcceleratedNetworking": true
+      }
+    },
+    "location": {
+      "value": "canadacentral"
+    },
+    "subnetId": {
+      "value": "/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/<RG_NAME>/providers/Microsoft.Network/virtualNetworks/<VNET_NAME>/subnets/<SUBNET_NAME>"
+    }
+  }
+}
