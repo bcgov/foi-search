@@ -1,0 +1,45 @@
+name: Deploy all Resources to AZURE environment
+
+on:
+  workflow_dispatch: 
+    inputs:
+      licence:
+        description: 'Licence plate (e.g., b21c6d)'
+        required: true
+        type: string
+      environment:
+        description: 'Environment (e.g., dev)'
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}  # Uses stored Azure credentials for authentication
+
+      - name: Set Environment Variables
+        run: |
+          echo "RG_NAME=${{ github.event.inputs.licence }}-${{ github.event.inputs.environment }}-networking" >> $GITHUB_ENV
+          echo "LICENCE_PLATE=${{ github.event.inputs.licence }}" >> $GITHUB_ENV
+          echo "ENV=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
+          echo "SUB_ID=${{ secrets.SUB_ID }}" >> $GITHUB_ENV
+
+      - name: Deploy Bicep Template
+        run: |
+          # Deploys the Bicep template to Azure using the dynamically set Resource Group name
+          az deployment group create \
+            --resource-group $RG_NAME \ 
+            --template-file bicep/main.bicep \ 
+            --parameters @bicep/main.parameters.json \ 
+            --parameters licencePlate=$LICENCE_PLATE \  
+                         environment=$ENV \  
+                         subId=$SUB_ID \  
+            --mode Incremental \  # Ensures only new resources are added/updated without deleting existing ones
+            --debug
