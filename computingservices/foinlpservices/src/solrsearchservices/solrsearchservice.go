@@ -14,8 +14,6 @@ func GetSolrDocumentByID(id string) types.SolrDocument {
 		log.Fatalf("Failed to create request: %v", err)
 	}
 
-	req.Header.Set("Authorization", "Basic YWRtaW46Rm9pMTIz")
-
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
