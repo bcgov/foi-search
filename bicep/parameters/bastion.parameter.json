@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "bastionConfig": {
+      "value": {
+        "skuName": "Basic",
+        "scaleUnits": 2
+      }
+    },
+    "publicIpConfig": {
+      "value": {
+        "name": "<ipName>",
+        "allocationMethod": "Static"
+      }
+    },
+    "bastionName": {
+      "value": "<licence-plate>-<env>-vwan-spoke-bastion"
+    },
+    "location": {
+      "value": "canadacentral"
+    },
+    "subnetId": {
+      "value": "/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/<RG_NAME>/providers/Microsoft.Network/virtualNetworks/<VNET_NAME>/subnets/AzureBastionSubnet"
+    }
+  }
+}

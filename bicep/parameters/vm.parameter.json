@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmConfig": {
+      "value": {
+        "vmName": "foidocintelVM",
+        "vmSize": "Standard_D2s_v3",
+        "imageReference": {
+          "publisher": "MicrosoftWindowsDesktop",
+          "offer": "Windows-10",
+          "sku": "win10-22h2-pro-g2",
+          "version": "latest"
+        },
+        "storageAccountType": "Premium_LRS",
+        "osDiskSizeGB": 127,
+        "licenseType": "Windows_Client"
+      }
+    },
+    "networkInterfaceId": {
+      "value": "/subscriptions/xxxx/resourceGroups/xxxx/providers/Microsoft.Network/networkInterfaces/xxxx"
+    },
+    "adminUsername": {
+      "value": ""
+    },
+    "location": {
+      "value": "canadacentral"
+    },
+    "adminPassword": {
+      "value": ""
+    }
+  }
+}

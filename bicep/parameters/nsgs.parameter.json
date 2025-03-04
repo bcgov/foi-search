@@ -1,0 +1,44 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "nsgConfigs": {
+        "value": [
+          {
+            "nsgName": "FOI-AZ-BASTION-SG",
+            "location": "canadacentral",
+            "securityRules": [
+              {
+                "name": "AllowAnyHTTPSInbound",
+                "protocol": "TCP",
+                "sourcePortRange": "*",
+                "destinationPortRanges": ["443"],
+                "sourceAddressPrefix": "Internet",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 100,
+                "direction": "Inbound"
+              },
+              {
+                "name": "AllowTagHTTPSInbound",
+                "protocol": "TCP",
+                "sourcePortRange": "*",
+                "destinationPortRanges": ["443"],
+                "sourceAddressPrefix": "GatewayManager",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 110,
+                "direction": "Inbound"
+              }
+            ]
+          },
+          {
+            "nsgName": "foidocintelSG",
+            "location": "canadacentral",
+            "securityRules": []
+          }
+        ]
+      }
+    }
+  }
+  

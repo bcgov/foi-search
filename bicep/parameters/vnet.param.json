@@ -1,0 +1,67 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "vnetName": {
+        "value": "myVNet"
+      },
+      "subnets": {
+        "value": [
+          {
+            "name": "vmsubnet",
+            "offset": 32,
+            "mask": 29,
+            "networkSecurityGroup": "FOI-AZ-BASTION-SG",
+            "serviceEndpoints": [
+              {
+                "service": "Microsoft.CognitiveServices",
+                "locations": [
+                  "*"
+                ]
+              }
+            ],
+            "privateEndpointNetworkPolicies": "Enabled",
+            "privateLinkServiceNetworkPolicies": "Enabled"
+          },
+          {
+            "name": "AzureBastionSubnet",
+            "offset": 64,
+            "mask": 26,
+            "networkSecurityGroup": "FOI-AZ-BASTION-SG",
+            "serviceEndpoints": [],
+            "privateEndpointNetworkPolicies": "Enabled",
+            "privateLinkServiceNetworkPolicies": "Enabled"
+          },
+          {
+            "name": "foidocintelsubnet",
+            "offset": 128,
+            "mask": 25,
+            "networkSecurityGroup": "foidocintelSG",
+            "serviceEndpoints": [
+              {
+                "service": "Microsoft.CognitiveServices",
+                "locations": [
+                  "*"
+                ]
+              }
+            ],
+            "privateEndpointNetworkPolicies": "Enabled",
+            "privateLinkServiceNetworkPolicies": "Enabled"
+          }
+        ]
+      },
+      "nsgArray": {
+        "value": [
+          {
+            "nsgName": "nsg1",
+            "id": "/subscriptions/xxxx/resourceGroups/xxxx/providers/Microsoft.Network/networkSecurityGroups/nsg1"
+          },
+          {
+            "nsgName": "nsg2",
+            "id": "/subscriptions/xxxx/resourceGroups/xxxx/providers/Microsoft.Network/networkSecurityGroups/nsg2"
+          }
+        ]
+      }
+    }
+  }
+  

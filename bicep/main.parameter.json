@@ -1,0 +1,212 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "canadacentral"
+    },
+    "subnets": {
+      "value": [
+        {
+          "name": "vmsubnet",
+          "offset": 32,
+          "mask": 29,
+          "networkSecurityGroup": "FOI-AZ-BASTION-SG",
+          "serviceEndpoints": [
+            {
+              "service": "Microsoft.CognitiveServices",
+              "locations": [
+                "*"
+              ]
+            }
+          ],
+          "privateEndpointNetworkPolicies": "Enabled",
+          "privateLinkServiceNetworkPolicies": "Enabled"
+        },
+        {
+          "name": "AzureBastionSubnet",
+          "offset": 64,
+          "mask": 26,
+          "networkSecurityGroup": "FOI-AZ-BASTION-SG",
+          "serviceEndpoints": [],
+          "privateEndpointNetworkPolicies": "Enabled",
+          "privateLinkServiceNetworkPolicies": "Enabled"
+        },
+        {
+          "name": "foidocintelsubnet",
+          "offset": 128,
+          "mask": 25,
+          "networkSecurityGroup": "foidocintelSG",
+          "serviceEndpoints": [
+            {
+              "service": "Microsoft.CognitiveServices",
+              "locations": [
+                "*"
+              ]
+            }
+          ],
+          "privateEndpointNetworkPolicies": "Enabled",
+          "privateLinkServiceNetworkPolicies": "Enabled"
+        }
+      ]
+    },
+    "nsgConfigs": {
+      "value": [
+        {
+          "nsgName": "FOI-AZ-BASTION-SG",
+          "location": "canadacentral",
+          "securityRules": [
+            {
+              "name": "AllowAnyHTTPSInbound",
+              "protocol": "TCP",
+              "sourcePortRange": "*",
+              "destinationPortRanges": [
+                "443"
+              ],
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            },
+            {
+              "name": "AllowTagHTTPSInbound",
+              "protocol": "TCP",
+              "sourcePortRange": "*",
+              "destinationPortRanges": [
+                "443"
+              ],
+              "sourceAddressPrefix": "GatewayManager",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Inbound"
+            },
+            {
+              "name": "AllowTagCustom80805701Inbound",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRanges": [
+                "8080",
+                "5701"
+              ],
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 120,
+              "direction": "Inbound"
+            },
+            {
+              "name": "AllowAnyCustom338922Outbound",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRanges": [
+                "3389",
+                "22"
+              ],
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 140,
+              "direction": "Outbound"
+            },
+            {
+              "name": "AllowTagHTTPSOutbound",
+              "protocol": "TCP",
+              "sourcePortRange": "*",
+              "destinationPortRanges": [
+                "443"
+              ],
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "AzureCloud",
+              "access": "Allow",
+              "priority": 160,
+              "direction": "Outbound"
+            }
+          ]
+        },
+        {
+          "nsgName": "foidocintelSG",
+          "location": "canadacentral",
+          "securityRules": []
+        }
+      ]
+    },
+    "asgName": {
+      "value": "ASG-FOIDOCINTEL"
+    },
+    "nicConfig": {
+      "value": {
+        "name": "azfoidoccextractvm",
+        "ipConfig": {
+          "name": "ipconfig1",
+          "privateIPAllocationMethod": "Dynamic",
+          "primary": true,
+          "privateIPAddressVersion": "IPv4"
+        },
+        "enableAcceleratedNetworking": true
+      }
+    },
+    "vmSubnetName": {
+      "value": "vmsubnet"
+    },
+    "docIntelName" :{
+      "value": "foidocintelservice-prod"
+    },
+    "docIntelConfig": {
+      "value": {
+        "skuName": "S0",
+        "publicNetworkAccess": "Disabled"
+      }
+    },
+    "vmConfig": {
+      "value": {
+        "vmName": "foidocextractVM",
+        "vmSize": "Standard_D2s_v3",
+        "imageReference": {
+            "publisher": "MicrosoftWindowsDesktop",
+            "offer": "Windows-10",
+            "sku": "win10-22h2-pro-g2",
+            "version": "latest"
+        },
+        "osDiskSizeGB": 127,
+        "storageAccountType": "Premium_LRS",
+        "licenseType": "Windows_Client"
+      }
+    },
+    "vmAdminUsername":{
+      "value": "foiadministrator"
+    },
+    "vmAdminPassword": {
+      "value": "Foiadmin#4321"
+    },
+    "docIntelSubnet": {
+      "value": "foidocintelsubnet"
+    },
+    "peConfig": {
+      "value": {
+        "name": "foidocintelprivateendpoint",
+        "groupIds": [
+          "account"
+        ],
+        "customNetworkInterfaceName": "foidocintelprivateendpoint-nic"
+      }
+    },
+    "bastionSubnet": {
+      "value": "AzureBastionSubnet"
+    },
+    "bastionConfig": {
+      "value": {
+        "skuName": "Basic",
+        "scaleUnits": 2
+      }
+    },
+    "publicIpConfig": {
+      "value": {
+        "sku": "Standard" ,
+        "name": "vwanspokeip",
+        "allocationMethod": "Static"
+      }
+    }
+  }
+}
