@@ -4,15 +4,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"foinlpservice/types"
+	"foinlpservice/utils"
 	"log"
 	"net/http"
 )
 
 func GetSolrDocumentByID(id string) types.SolrDocument {
-	req, err := http.NewRequest("GET", "https://solr-fc7a67-dev.apps.gold.devops.gov.bc.ca/solr/foisearch/get?ids="+id, nil)
+	solrendpoint := utils.ViperEnvVariable("solrendpoint")
+	req, err := http.NewRequest("GET", solrendpoint+"get?ids="+id, nil)
 	if err != nil {
 		log.Fatalf("Failed to create request: %v", err)
 	}
+
+	req.Header.Set("Authorization", "Basic "+utils.ViperEnvVariable("solrauthkey"))
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

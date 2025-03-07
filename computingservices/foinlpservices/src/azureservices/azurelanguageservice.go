@@ -6,11 +6,14 @@ import (
 	"fmt"
 	"foinlpservice/solrsearchservices"
 	"foinlpservice/types"
+	"foinlpservice/utils"
 	"log"
 	"net/http"
 )
 
 func IdentifyPII(data types.AzureEventGridMessage) {
+	endpoint := utils.ViperEnvVariable("azurelanguageserviceendpoint")
+	apiKey := utils.ViperEnvVariable("azureapikey")
 	// Sample text for PII detection
 	// text := "John Doe, a 35-year-old software engineer, lives at 1234 Elm Street, Springfield, Ontario, M5A 1A1. His phone number is (555) 123-4567, and his email address is johndoe@example.com. He was born on March 14, 1988, and holds a Canadian passport with the number X1234567. His employee ID at Acme Corp. is 8765. John’s credit card number is 4111 2222 3333 4444, and his Canadian SIN is 123 456 789. His health insurance ID is HI987654321"
 
@@ -71,4 +74,6 @@ func IdentifyPII(data types.AzureEventGridMessage) {
 				entity.Text, entity.Category, entity.SubCategory, entity.ConfidenceScore)
 		}
 	}
+
+	// call solr api to save results
 }

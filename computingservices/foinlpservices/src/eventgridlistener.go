@@ -48,7 +48,7 @@ func eventHandler(w http.ResponseWriter, r *http.Request) {
 	// Log received events
 	for _, event := range events {
 		fmt.Printf("Received Event: %+v\n", event)
-		if event.EventType == "SampleEventType" {
+		if event.EventType == "PIIEventType" {
 			fmt.Printf("Processing Order ID: %s\n", string(event.Data))
 			var documentData types.AzureEventGridMessage
 			err = json.Unmarshal(event.Data, &documentData)
