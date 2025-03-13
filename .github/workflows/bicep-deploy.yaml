@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       environment:
-        description: 'Environment (e.g., dev)'
+        description: 'Environment (dev, test, prod) (case insensitive).'
         required: true
         type: string
 
@@ -19,27 +19,41 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Set ENV Variables
+        run: |
+          ENVIRONMENT=$(echo "${{ github.event.inputs.environment }}" | tr '[:lower:]' '[:upper:]')
+
+          case "$ENVIRONMENT" in
+            DEV)
+              echo "ACTION_ENV=AZURE_CREDENTIALS_DEV" >> $GITHUB_ENV ;;
+            TEST)
+              echo "ACTION_ENV=AZURE_CREDENTIALS_TEST" >> $GITHUB_ENV ;;
+            PROD)
+              echo "ACTION_ENV=AZURE_CREDENTIALS_PROD" >> $GITHUB_ENV ;;
+            *)
+              echo "Invalid environment specified" >&2
+              exit 1 ;;
+          esac
+
+      - name: Install Azure CLI
+        run: |
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
       - name: Log in to Azure
         uses: azure/login@v1
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}  # Uses stored Azure credentials for authentication
-
-      - name: Set Environment Variables
-        run: |
-          echo "RG_NAME=${{ github.event.inputs.licence }}-${{ github.event.inputs.environment }}-networking" >> $GITHUB_ENV
-          echo "LICENCE_PLATE=${{ github.event.inputs.licence }}" >> $GITHUB_ENV
-          echo "ENV=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
-          echo "SUB_ID=${{ secrets.SUB_ID }}" >> $GITHUB_ENV
+          creds: ${{ secrets[env.ACTION_ENV] }}
 
       - name: Deploy Bicep Template
-        run: |
-          # Deploys the Bicep template to Azure using the dynamically set Resource Group name
+        run: |      
           az deployment group create \
-            --resource-group $RG_NAME \ 
-            --template-file bicep/main.bicep \ 
-            --parameters @bicep/main.parameters.json \ 
-            --parameters licencePlate=$LICENCE_PLATE \  
-                         environment=$ENV \  
-                         subId=$SUB_ID \  
-            --mode Incremental \  # Ensures only new resources are added/updated without deleting existing ones
+            --resource-group "${{ github.event.inputs.licence }}-${ENVIRONMENT}-networking" \
+            --template-file bicep/main.bicep \
+            --mode Incremental \
+            --parameters @bicep/main.parameters.json \
+            --parameters licencePlate="${{ github.event.inputs.licence }}" \
+                         environment="$ENVIRONMENT" \
+                         subId="${{ secrets[format('SUB_ID_{0}', env.ENVIRONMENT)] }}" \
+                         vmAdminUsername="${{ secrets[format('VM_ADMIN_{0}', env.ENVIRONMENT)] }}" \
+                         vmAdminPassword="${{ secrets[format('VM_PW_{0}', env.ENVIRONMENT)] }}" \
             --debug
