@@ -150,9 +150,6 @@
     "vmSubnetName": {
       "value": "vmsubnet"
     },
-    "docIntelName" :{
-      "value": "foidocintelservice-prod"
-    },
     "docIntelConfig": {
       "value": {
         "skuName": "S0",
