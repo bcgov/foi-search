@@ -48,6 +48,15 @@ jobs:
               exit 1 ;;
           esac
       
+      - name: Install Azure CLI
+        run: |
+            curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+            
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+            creds: ${{ secrets[env.ACTION_ENV] }}
+
       - name: Deploy Bicep Template
         run: |
           ENVIRONMENT_LOWER=$(echo "$ENVIRONMENT" | tr '[:upper:]' '[:lower:]')
