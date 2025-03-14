@@ -156,7 +156,8 @@
     "docIntelConfig": {
       "value": {
         "skuName": "S0",
-        "publicNetworkAccess": "Disabled"
+        "publicNetworkAccess": "Disabled",
+        "kind": "FormRecognizer"
       }
     },
     "vmConfig": {
@@ -173,12 +174,6 @@
         "storageAccountType": "Premium_LRS",
         "licenseType": "Windows_Client"
       }
-    },
-    "vmAdminUsername":{
-      "value": "foiadministrator"
-    },
-    "vmAdminPassword": {
-      "value": "Foiadmin#4321"
     },
     "docIntelSubnet": {
       "value": "foidocintelsubnet"
