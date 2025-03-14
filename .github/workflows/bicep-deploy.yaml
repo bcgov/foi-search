@@ -47,17 +47,12 @@ jobs:
               echo "Invalid environment specified" >&2
               exit 1 ;;
           esac
-
-          # Set Resource Group
-          RESOURCE_GROUP="${{ github.event.inputs.licence }}-${ENVIRONMENT}-networking"
-          echo "RESOURCE_GROUP=$RESOURCE_GROUP" >> $GITHUB_ENV
-
       
       - name: Deploy Bicep Template
         run: |
           ENVIRONMENT_LOWER=$(echo "$ENVIRONMENT" | tr '[:upper:]' '[:lower:]')
           az deployment group create \
-            --resource-group "$RESOURCE_GROUP" \
+            --resource-group "${{ github.event.inputs.licence }}-${ENVIRONMENT_LOWER}-networking" \
             --template-file bicep/main.bicep \
             --mode Incremental \
             --parameters @bicep/main.parameters.json \
