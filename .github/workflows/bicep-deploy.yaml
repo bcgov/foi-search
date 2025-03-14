@@ -22,38 +22,48 @@ jobs:
       - name: Set ENV Variables
         run: |
           ENVIRONMENT=$(echo "${{ github.event.inputs.environment }}" | tr '[:lower:]' '[:upper:]')
+          echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_ENV
 
           case "$ENVIRONMENT" in
             DEV)
-              echo "ACTION_ENV=AZURE_CREDENTIALS_DEV" >> $GITHUB_ENV ;;
+              echo "ACTION_ENV=AZURE_CREDENTIALS_DEV" >> $GITHUB_ENV
+              echo "SUB_ID=${{ secrets.SUB_ID_DEV }}" >> $GITHUB_ENV
+              echo "VM_ADMIN_USERNAME=${{ secrets.VM_ADMIN_DEV }}" >> $GITHUB_ENV
+              echo "VM_ADMIN_PASSWORD=${{ secrets.VM_PW_DEV }}" >> $GITHUB_ENV
+              ;;
             TEST)
-              echo "ACTION_ENV=AZURE_CREDENTIALS_TEST" >> $GITHUB_ENV ;;
+              echo "ACTION_ENV=AZURE_CREDENTIALS_TEST" >> $GITHUB_ENV
+              echo "SUB_ID=${{ secrets.SUB_ID_TEST }}" >> $GITHUB_ENV
+              echo "VM_ADMIN_USERNAME=${{ secrets.VM_ADMIN_TEST }}" >> $GITHUB_ENV
+              echo "VM_ADMIN_PASSWORD=${{ secrets.VM_PW_TEST }}" >> $GITHUB_ENV
+              ;;
             PROD)
-              echo "ACTION_ENV=AZURE_CREDENTIALS_PROD" >> $GITHUB_ENV ;;
+              echo "ACTION_ENV=AZURE_CREDENTIALS_PROD" >> $GITHUB_ENV
+              echo "SUB_ID=${{ secrets.SUB_ID_PROD }}" >> $GITHUB_ENV
+              echo "VM_ADMIN_USERNAME=${{ secrets.VM_ADMIN_PROD }}" >> $GITHUB_ENV
+              echo "VM_ADMIN_PASSWORD=${{ secrets.VM_PW_PROD }}" >> $GITHUB_ENV
+              ;;
             *)
               echo "Invalid environment specified" >&2
               exit 1 ;;
           esac
 
-      - name: Install Azure CLI
-        run: |
-          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+          # Set Resource Group
+          RESOURCE_GROUP="${{ github.event.inputs.licence }}-${ENVIRONMENT}-networking"
+          echo "RESOURCE_GROUP=$RESOURCE_GROUP" >> $GITHUB_ENV
 
-      - name: Log in to Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets[env.ACTION_ENV] }}
-
+      
       - name: Deploy Bicep Template
-        run: |      
+        run: |
+          ENVIRONMENT_LOWER=$(echo "$ENVIRONMENT" | tr '[:upper:]' '[:lower:]')
           az deployment group create \
-            --resource-group "${{ github.event.inputs.licence }}-${ENVIRONMENT}-networking" \
+            --resource-group "$RESOURCE_GROUP" \
             --template-file bicep/main.bicep \
             --mode Incremental \
             --parameters @bicep/main.parameters.json \
             --parameters licencePlate="${{ github.event.inputs.licence }}" \
-                         environment="$ENVIRONMENT" \
-                         subId="${{ secrets[format('SUB_ID_{0}', env.ENVIRONMENT)] }}" \
-                         vmAdminUsername="${{ secrets[format('VM_ADMIN_{0}', env.ENVIRONMENT)] }}" \
-                         vmAdminPassword="${{ secrets[format('VM_PW_{0}', env.ENVIRONMENT)] }}" \
+                         environment="$ENVIRONMENT_LOWER" \
+                         subId="$SUB_ID" \
+                         vmAdminUsername="$VM_ADMIN_USERNAME" \
+                         vmAdminPassword="$VM_ADMIN_PASSWORD" \
             --debug
