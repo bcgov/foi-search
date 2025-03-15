@@ -36,21 +36,57 @@ var cidrParts = split(addressSpace, '/')
 var baseIP = cidrParts[0]
 var ipOctets = split(baseIP, '.')
 
-// Create subnets based on the updated subnet configurations
-resource subnetDeployment 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' = [for subnet in updatedSubnets: {
+
+// Deploy first subnet
+resource subnet0 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' = if (length(updatedSubnets) > 0) {
   parent: virtualNetwork
-  name: subnet.name
+  name: updatedSubnets[0].name
   properties: {
-    // Calculate the subnet address range using the base IP and subnet offset/mask
-    addressPrefix: '${ipOctets[0]}.${ipOctets[1]}.${ipOctets[2]}.${int(ipOctets[3]) + subnet.offset}/${subnet.mask}'
+    addressPrefix: '${ipOctets[0]}.${ipOctets[1]}.${ipOctets[2]}.${int(ipOctets[3]) + updatedSubnets[0].offset}/${updatedSubnets[0].mask}'
     networkSecurityGroup: {
-      id: subnet.networkSecurityGroupId // Assign NSG ID to the subnet
+      id: updatedSubnets[0].networkSecurityGroupId
     }
-    serviceEndpoints: subnet.serviceEndpoints // Attach any service endpoints to the subnet
-    privateEndpointNetworkPolicies: subnet.privateEndpointNetworkPolicies // Define private endpoint policies
-    privateLinkServiceNetworkPolicies: subnet.privateLinkServiceNetworkPolicies // Define private link service policies
+    serviceEndpoints: updatedSubnets[0].serviceEndpoints
+    privateEndpointNetworkPolicies: updatedSubnets[0].privateEndpointNetworkPolicies
+    privateLinkServiceNetworkPolicies: updatedSubnets[0].privateLinkServiceNetworkPolicies
   }
-}]
+}
+
+// Deploy second subnet, depending on first
+resource subnet1 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' = if (length(updatedSubnets) > 1) {
+  parent: virtualNetwork
+  name: updatedSubnets[1].name
+  properties: {
+    addressPrefix: '${ipOctets[0]}.${ipOctets[1]}.${ipOctets[2]}.${int(ipOctets[3]) + updatedSubnets[1].offset}/${updatedSubnets[1].mask}'
+    networkSecurityGroup: {
+      id: updatedSubnets[1].networkSecurityGroupId
+    } 
+    serviceEndpoints: updatedSubnets[1].serviceEndpoints
+    privateEndpointNetworkPolicies: updatedSubnets[1].privateEndpointNetworkPolicies
+    privateLinkServiceNetworkPolicies: updatedSubnets[1].privateLinkServiceNetworkPolicies
+  }
+  dependsOn: [
+    subnet0
+  ]
+}
+
+// Deploy third subnet, depending on second
+resource subnet2 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' = if (length(updatedSubnets) > 2) {
+  parent: virtualNetwork
+  name: updatedSubnets[2].name
+  properties: {
+    addressPrefix: '${ipOctets[0]}.${ipOctets[1]}.${ipOctets[2]}.${int(ipOctets[3]) + updatedSubnets[2].offset}/${updatedSubnets[2].mask}'
+    networkSecurityGroup: {
+      id: updatedSubnets[2].networkSecurityGroupId
+    } 
+    serviceEndpoints: updatedSubnets[2].serviceEndpoints
+    privateEndpointNetworkPolicies: updatedSubnets[2].privateEndpointNetworkPolicies
+    privateLinkServiceNetworkPolicies: updatedSubnets[2].privateLinkServiceNetworkPolicies
+  }
+  dependsOn: [
+    subnet1
+  ]
+}
 
 // Output the virtual network ID
 output vnetId string = virtualNetwork.id
