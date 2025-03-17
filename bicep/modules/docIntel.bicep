@@ -24,6 +24,14 @@ resource documentIntelligence 'Microsoft.CognitiveServices/accounts@2024-10-01' 
 
   // Properties of the resource
   properties: {
+     // Custom subdomain name for the service, typically used to create a unique URL
+     customSubDomainName: docIntelName
+
+     // Network ACLs to define access restrictions, default action is 'Allow'
+     networkAcls: {
+       defaultAction: 'Allow'
+     }
+     
     // Public network access setting, this controls whether the service is publicly accessible
     publicNetworkAccess: docIntelConfig.publicNetworkAccess
   }
