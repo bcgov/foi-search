@@ -1044,6 +1044,7 @@
     <field name="foirequestreceiveddate" type="date" indexed="true" stored="true" required="false"/>
     <field name="foirequesttype" type="text_general"/>
     <field name="foirequestpublicbody" type="text_general"/>
+    <field name="foipiijson" type="text_general"/>
    
     <!-- Similarity is the scoring routine for each document vs. a query.
        A custom Similarity or SimilarityFactory may be specified here, but 
