@@ -109,7 +109,7 @@ module nic 'modules/nic.bicep' = {
   params: {
     location: location
     nicConfig: nicConfig
-    subnetId: '/subscriptions/${subId}/resourceGroups/${subId}/providers/Microsoft.Network/virtualNetworks/${vnetName}/subnets/${vmSubnetName}'
+    subnetId: '/subscriptions/${subId}/resourceGroups/${resourceGroup}/providers/Microsoft.Network/virtualNetworks/${vnetName}/subnets/${vmSubnetName}'
   }
   dependsOn: [vnet] // Ensure VNet is deployed before NIC
 }
