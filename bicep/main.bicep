@@ -148,7 +148,7 @@ module privateEndpoint 'modules/pvt-ep.bicep' = {
       }
     ]
     peConfig: peConfig
-    privateLinkServiceId: '/subscriptions/${subId}/resourceGroups/${resourceGroup}/providers/Microsoft.CognitiveServices/accounts/${docIntelConfig.name}'
+    privateLinkServiceId: '/subscriptions/${subId}/resourceGroups/${resourceGroup}/providers/Microsoft.CognitiveServices/accounts/${docIntelName}'
     subnetId: '/subscriptions/${subId}/resourceGroups/${resourceGroup}/providers/Microsoft.Network/virtualNetworks/${vnetName}/subnets/${docIntelSubnet}'
   }
   dependsOn: [vnet, nic, documentIntelligence] // Ensure VNet, NIC, and Doc Intel are deployed before Private Endpoint
