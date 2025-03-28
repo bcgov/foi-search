@@ -11,7 +11,7 @@ import (
 	"net/http"
 )
 
-func PushtoEventGrid(events []types.AzureEventGridMessage) bool {
+func PushtoEventGrid(events []types.EventGridEvent) bool {
 	eventGridTopicURL := utils.ViperEnvVariable("azureeventgridendpoint")
 	accessKey := utils.ViperEnvVariable("azureeventgridaccesskey")
 

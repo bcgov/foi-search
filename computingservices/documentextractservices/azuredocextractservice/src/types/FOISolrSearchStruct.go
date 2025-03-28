@@ -17,4 +17,5 @@ type SOLRSearchDocument struct {
 	FoiRequestpublicbody   string    `json:"foirequestpublicbody"`
 	FoiRequestType         string    `json:"foirequesttype"`
 	FoiRequestMiscInfo     string    `json:"foirequestmiscinfo"`
+	FOiPIIJSON             string    `json:"foipiijson"`
 }

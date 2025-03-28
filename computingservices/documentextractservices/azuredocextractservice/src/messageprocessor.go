@@ -65,6 +65,7 @@ func main() {
 								FoiDocumentURL:         document.DocumentS3URL,
 								FoiRequestType:         request.RequestType,
 							}
+							_solrsearchdocuemnt.FOiPIIJSON = azureservices.IdentifyPII(line.Content)
 
 							searchdocumentpagelines = append(searchdocumentpagelines, _solrsearchdocuemnt)
 							fmt.Println(_solrsearchdocuemnt.FoiDocumentFileName)
@@ -73,11 +74,11 @@ func main() {
 					}
 
 					solrsearchservices.PushtoSolr(searchdocumentpagelines)
-					eventgridmessages := transformToEventGridMessages(searchdocumentpagelines)
-					go azureservices.PushtoEventGrid(eventgridmessages)
+					// eventgridmessages := transformToEventGridMessages(searchdocumentpagelines)
+					// go azureservices.PushtoEventGrid(eventgridmessages)
 
 					// Give time(1 sec below) for goroutine to execute before the program exits
-					time.Sleep(1 * time.Second)
+					//time.Sleep(1 * time.Second)
 
 				}
 			}
@@ -119,17 +120,25 @@ func getBytesfromDocumentPath(documenturlpath string) []byte {
 }
 
 // Function to transform SOLRSearchDocument array to AzureEventGridMessage array
-func transformToEventGridMessages(solrDocs []types.SOLRSearchDocument) []types.AzureEventGridMessage {
-	var eventGridMessages []types.AzureEventGridMessage
+func transformToEventGridMessages(solrDocs []types.SOLRSearchDocument) []types.EventGridEvent {
+	var eventGridMessages []types.EventGridEvent
 
 	for _, doc := range solrDocs {
-		eventGridMessages = append(eventGridMessages, types.AzureEventGridMessage{
+		foimessagedata := types.AzureEventGridMessage{
 			Foisolrid:             doc.Foisolrid,
 			FoiDocumentID:         doc.FoiDocumentID,
 			FoiRequestNumber:      doc.FoiRequestNumber,
 			FoiMinistryRequestID:  doc.FoiMinistryRequestID,
 			FoiDocumentPageNumber: doc.FoiDocumentPageNumber,
-			FoiDocumentURL:        doc.FoiDocumentURL,
+			FoiDocumentURL:        doc.FoiDocumentURL}
+
+		eventUUID := uuid.New()
+		eventGridMessages = append(eventGridMessages, types.EventGridEvent{
+			ID:        eventUUID.String(),
+			Subject:   doc.FoiRequestNumber + doc.FoiDocumentID,
+			Data:      foimessagedata,
+			EventType: "PIIEventType",
+			Time:      time.Now().Format(time.RFC3339),
 		})
 	}
 
