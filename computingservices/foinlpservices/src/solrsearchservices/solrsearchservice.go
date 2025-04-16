@@ -1,6 +1,7 @@
 package solrsearchservices
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"foinlpservice/types"
@@ -11,6 +12,7 @@ import (
 
 func GetSolrDocumentByID(id string) types.SolrDocument {
 	solrendpoint := utils.ViperEnvVariable("solrendpoint")
+	fmt.Println(id)
 	req, err := http.NewRequest("GET", solrendpoint+"get?ids="+id, nil)
 	if err != nil {
 		log.Fatalf("Failed to create request: %v", err)
@@ -55,4 +57,65 @@ func GetSolrDocumentByID(id string) types.SolrDocument {
 	}
 
 	return solrdetails.Documents[0]
+}
+
+func SaveDocumentPIIToSolr(id string, pii string) bool {
+
+	// Convert the struct to JSON
+	// jsonData, err := json.Marshal(searchdocs)
+	// fmt.Println("SOLR Search Data starts here")
+	// fmt.Println(string(jsonData))
+	// fmt.Println("SOLR Search Data ends here")
+	// if err != nil {
+	// 	log.Fatal("Error marshaling JSON:", err)
+	// }
+
+	payload := []types.SolrPayload{
+		{
+			ID: id,
+			FoipiiJSON: types.FoipiiJSON{
+				Set: []string{pii},
+			},
+		},
+	}
+
+	// Convert to JSON
+	jsonBytes, err := json.Marshal(payload)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(string(jsonBytes))
+
+	// Solr endpoint URL (Replace with your Solr endpoint)
+	url := utils.ViperEnvVariable("solrendpoint")
+	// Create a POST request with JSON data
+	fmt.Println(url + "update?commit=true")
+	req, err := http.NewRequest("POST", url+"update?commit=true", bytes.NewBuffer(jsonBytes))
+	if err != nil {
+		log.Fatal("Error creating request:", err)
+	}
+
+	// Set the appropriate headers for JSON content
+	req.Header.Set("Content-Type", "application/json")
+	username := utils.ViperEnvVariable("solradmin")
+	password := utils.ViperEnvVariable("solrpassword")
+	req.SetBasicAuth(username, password)
+	// Send the request using the http client
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal("Error sending request:", err)
+	}
+	defer resp.Body.Close()
+
+	// Handle the response
+	if resp.StatusCode == http.StatusOK {
+		fmt.Println("Successfully posted to Solr")
+		return true
+	} else {
+		fmt.Printf("Failed to post to Solr. Status: %s\n", resp.Status)
+		return false
+	}
+
 }

@@ -17,3 +17,14 @@ type EventGridEvent struct {
 	EventType string                `json:"eventType"`
 	Time      string                `json:"eventTime"`
 }
+
+type CloudEvent struct {
+	ID              string                `json:"id"`
+	Source          string                `json:"source"`
+	Subject         string                `json:"subject"`
+	SpecVersion     string                `json:"specversion"`
+	Data            AzureEventGridMessage `json:"data"`
+	DataContentType string                `json:"datacontenttype"`
+	Type            string                `json:"type"`
+	Time            string                `json:"time"`
+}

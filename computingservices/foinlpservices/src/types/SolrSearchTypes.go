@@ -17,3 +17,12 @@ type SolrDocument struct {
 	ID   string   `json:"id"`
 	Text []string `json:"foidocumentsentence"`
 }
+
+type FoipiiJSON struct {
+	Set []string `json:"set"`
+}
+
+type SolrPayload struct {
+	ID         string     `json:"id"`
+	FoipiiJSON FoipiiJSON `json:"foipiijson"`
+}
