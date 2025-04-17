@@ -8,7 +8,7 @@ import (
 
 func CallAzureDocument(jsonPayload []byte, document types.Documents, request types.Requests) (types.AnalyzeResults, error) {
 	subscriptionKey := utils.ViperEnvVariable("azuresubcriptionkey")
-	baseURL := "https://foidocintelservice.cognitiveservices.azure.com"
+	baseURL := utils.ViperEnvVariable("azuredocumentaiendpoint")
 
 	service := NewAzureService(subscriptionKey, baseURL)
 
