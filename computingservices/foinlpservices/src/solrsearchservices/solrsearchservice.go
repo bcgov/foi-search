@@ -12,7 +12,7 @@ import (
 
 func GetSolrDocumentByID(id string) types.SolrDocument {
 	solrendpoint := utils.ViperEnvVariable("solrendpoint")
-	fmt.Println(id)
+	// fmt.Println(id)
 	req, err := http.NewRequest("GET", solrendpoint+"get?ids="+id, nil)
 	if err != nil {
 		log.Fatalf("Failed to create request: %v", err)
@@ -42,7 +42,7 @@ func GetSolrDocumentByID(id string) types.SolrDocument {
 		log.Fatalf("Failed to decode response: %v", err)
 	}
 
-	fmt.Printf("Response: %s\n", string(solrresponse.Body))
+	// fmt.Printf("Response: %s\n", string(solrresponse.Body))
 
 	var solrdetails types.SolrRespDetails
 
@@ -59,7 +59,9 @@ func GetSolrDocumentByID(id string) types.SolrDocument {
 	return solrdetails.Documents[0]
 }
 
-func SaveDocumentPIIToSolr(id string, pii string) bool {
+func SaveDocumentPIIToSolr(payload []types.SolrPayload) bool {
+
+	// fmt.Println(id)
 
 	// Convert the struct to JSON
 	// jsonData, err := json.Marshal(searchdocs)
@@ -70,14 +72,14 @@ func SaveDocumentPIIToSolr(id string, pii string) bool {
 	// 	log.Fatal("Error marshaling JSON:", err)
 	// }
 
-	payload := []types.SolrPayload{
-		{
-			ID: id,
-			FoipiiJSON: types.FoipiiJSON{
-				Set: []string{pii},
-			},
-		},
-	}
+	// payload := []types.SolrPayload{
+	// 	{
+	// 		ID: id,
+	// 		FoipiiJSON: types.FoipiiJSON{
+	// 			Set: []string{pii},
+	// 		},
+	// 	},
+	// }
 
 	// Convert to JSON
 	jsonBytes, err := json.Marshal(payload)
@@ -85,12 +87,12 @@ func SaveDocumentPIIToSolr(id string, pii string) bool {
 		panic(err)
 	}
 
-	fmt.Println(string(jsonBytes))
+	// fmt.Println(string(jsonBytes))
 
 	// Solr endpoint URL (Replace with your Solr endpoint)
 	url := utils.ViperEnvVariable("solrendpoint")
 	// Create a POST request with JSON data
-	fmt.Println(url + "update?commit=true")
+	// fmt.Println(url + "update?commit=true")
 	req, err := http.NewRequest("POST", url+"update?commit=true", bytes.NewBuffer(jsonBytes))
 	if err != nil {
 		log.Fatal("Error creating request:", err)

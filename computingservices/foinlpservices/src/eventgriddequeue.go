@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -86,21 +87,35 @@ func main() {
 	// 	fmt.Println("❌ Error starting server:", err)
 	// }
 
+	start := time.Now()
+	fmt.Println("Start Time :" + start.String())
+
 	timeoutCounter := 0
 	maxTimeouts, err := strconv.Atoi(utils.ViperEnvVariable("eventgridmaxtimeouts"))
 	if err != nil {
 		log.Fatalf("Error getting maxtimeouts env %v", err)
 	}
 	timeoutDuration, err := strconv.Atoi(utils.ViperEnvVariable("eventgridtimeoutseconds"))
+	if err != nil {
+		log.Fatalf("Error getting eventgridtimeoutseconds env %v", err)
+	}
+	eventgridendpoint := utils.ViperEnvVariable("eventgridendpoint")
+	eventgridapiversion := utils.ViperEnvVariable("eventgridapiversion")
+	eventgridaccesskey := utils.ViperEnvVariable("eventgridaccesskey")
+	eventgridmaxevents := utils.ViperEnvVariable("eventgridmaxevents")
+	maxEvents, err := strconv.Atoi(eventgridmaxevents)
+	if err != nil {
+		log.Fatalf("Error getting maxevents env %v", err)
+	}
 	successCount := 0
 
-	for {
+	dequeueditems := 0
 
-		eventgridendpoint := utils.ViperEnvVariable("eventgridendpoint")
-		eventgridapiversion := utils.ViperEnvVariable("eventgridapiversion")
-		eventgridaccesskey := utils.ViperEnvVariable("eventgridaccesskey")
+	for dequeueditems < 995 { // azure PII has limit of 1000 api calls / min
 
-		req, err := http.NewRequest("POST", eventgridendpoint+"receive?"+eventgridapiversion, nil)
+		dequeueditems += maxEvents
+
+		req, err := http.NewRequest("POST", eventgridendpoint+"receive?"+eventgridapiversion+"&maxEvents="+eventgridmaxevents, nil)
 		if err != nil {
 			log.Printf("Failed to create request: %v", err)
 			bufio.NewReader(os.Stdin).ReadBytes('\n')
@@ -146,60 +161,104 @@ func main() {
 			// return
 		}
 
+		var wg sync.WaitGroup
+		var lockTokens []string
+		// const maxConcurrency = 200
+		sem := make(chan struct{}, maxEvents)
+
+		var payloads []types.SolrPayload
+
+		results := make(chan types.SolrPayload, maxEvents)
+
+		log.Println(len(eventResponse.Value))
+
 		for _, event := range eventResponse.Value {
 			lockToken := event.BrokerProperties.LockToken
-			data := event.Event.Data
-			document := solrsearchservices.GetSolrDocumentByID(data.Foisolrid)
-			pii := azureservices.IdentifyPII(document)
-			solrsearchservices.SaveDocumentPIIToSolr(document.ID, pii)
-			fmt.Println("lockToken:", lockToken)
+			lockTokens = append(lockTokens, lockToken)
 
-			acknowledgePayload := types.AcknowledgePayload{
-				LockTokens: []string{lockToken},
-			}
+			wg.Add(1)
+			sem <- struct{}{}
 
-			payloadBytes, err := json.Marshal(acknowledgePayload)
-			req, err := http.NewRequest("POST", eventgridendpoint+"acknowledge?"+eventgridapiversion, bytes.NewBuffer(payloadBytes))
-			if err != nil {
-				log.Printf("Failed to create request: %v", err)
-				bufio.NewReader(os.Stdin).ReadBytes('\n')
-				log.Fatalf("Failed to create request: %v", err)
-			}
-
-			req.Header.Set("Content-Type", "application/json")
-			req.Header.Set("Authorization", "SharedAccessKey "+eventgridaccesskey)
-
-			client := &http.Client{Timeout: 5 * time.Second}
-			resp, err := client.Do(req)
-			if err != nil {
-				log.Printf("Failed to send ack request: %v", err)
-				bufio.NewReader(os.Stdin).ReadBytes('\n')
-				log.Fatalf("Failed to send ack request: %v", err)
-			}
-			fmt.Printf("HTTP Status Code: %d\n", resp.StatusCode)
-			// Handle non-200 HTTP responses
-			if resp.StatusCode != http.StatusOK {
-				log.Printf("unexpected response status: %s", resp.Status)
-				bufio.NewReader(os.Stdin).ReadBytes('\n')
-				log.Fatalf("unexpected response status: %s", resp.Status)
-			}
-			body, err := io.ReadAll(resp.Body)
-			fmt.Printf("Response Body: %s\n", string(body))
-
-			defer resp.Body.Close()
-			var acknowledgeResponse types.AcknowledgeResponse
-			err = json.Unmarshal(body, &acknowledgeResponse)
-			if len(acknowledgeResponse.FailedLockTokens) > 0 {
-				timeoutCounter++
-				if timeoutCounter >= maxTimeouts {
-					fmt.Println("Max no. of timeouts exceeded")
-					break
+			go func(event types.Message) {
+				data := event.Event.Data
+				// document := solrsearchservices.GetSolrDocumentByID(data.Foisolrid)
+				pii := azureservices.IdentifyPII(data.Content, client)
+				// fmt.Println(data.Foisolrid)
+				results <- types.SolrPayload{
+					ID: data.Foisolrid,
+					FoipiiJSON: types.FoipiiJSON{
+						Set: []string{pii},
+					},
 				}
-			} else if len(acknowledgeResponse.SucceededLockTokens) > 0 {
-				successCount++
-			}
+				<-sem
+				wg.Done()
+			}(event)
+
+			// fmt.Println("lockToken:", lockToken)
+
+		}
+		wg.Wait()
+		close(results)
+
+		for res := range results {
+			payloads = append(payloads, res)
+		}
+
+		solrsearchservices.SaveDocumentPIIToSolr(payloads)
+
+		acknowledgePayload := types.AcknowledgePayload{
+			LockTokens: lockTokens,
+		}
+
+		payloadBytes, err := json.Marshal(acknowledgePayload)
+		req, err = http.NewRequest("POST", eventgridendpoint+"acknowledge?"+eventgridapiversion, bytes.NewBuffer(payloadBytes))
+		if err != nil {
+			log.Printf("Failed to create request: %v", err)
+			bufio.NewReader(os.Stdin).ReadBytes('\n')
+			log.Fatalf("Failed to create request: %v", err)
+		}
+
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "SharedAccessKey "+eventgridaccesskey)
+
+		client = &http.Client{Timeout: 5 * time.Second}
+		resp, err = client.Do(req)
+		if err != nil {
+			log.Printf("Failed to send ack request: %v", err)
+			bufio.NewReader(os.Stdin).ReadBytes('\n')
+			log.Fatalf("Failed to send ack request: %v", err)
+		}
+		fmt.Printf("HTTP Status Code: %d\n", resp.StatusCode)
+		// Handle non-200 HTTP responses
+		if resp.StatusCode != http.StatusOK {
+			log.Printf("unexpected response status: %s", resp.Status)
+			bufio.NewReader(os.Stdin).ReadBytes('\n')
+			log.Fatalf("unexpected response status: %s", resp.Status)
+		}
+		body, err = io.ReadAll(resp.Body)
+		fmt.Printf("Response Body: %s\n", string(body))
+
+		defer resp.Body.Close()
+		var acknowledgeResponse types.AcknowledgeResponse
+		err = json.Unmarshal(body, &acknowledgeResponse)
+		// if len(acknowledgeResponse.FailedLockTokens) > 0 {
+		// 	// timeoutCounter++
+		// 	// if timeoutCounter >= maxTimeouts {
+		// 	fmt.Println("Failed Token: " + acknowledgeResponse.FailedLockTokens)
+		// 		// break
+		// 	// }
+		// } else
+
+		if len(acknowledgeResponse.SucceededLockTokens) > 0 {
+			successCount += len(acknowledgeResponse.SucceededLockTokens)
 		}
 
 	}
+
 	fmt.Println("Successfully Dequeued:", successCount)
+
+	end := time.Now()
+	fmt.Println("End Time :" + end.String())
+	total := end.Sub(start)
+	fmt.Println("Total time:" + total.String())
 }

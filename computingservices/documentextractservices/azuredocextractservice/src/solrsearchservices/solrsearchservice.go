@@ -14,9 +14,9 @@ func PushtoSolr(searchdocs []types.SOLRSearchDocument) bool {
 
 	// Convert the struct to JSON
 	jsonData, err := json.Marshal(searchdocs)
-	fmt.Println("SOLR Search Data starts here")
-	fmt.Println(string(jsonData))
-	fmt.Println("SOLR Search Data ends here")
+	// fmt.Println("SOLR Search Data starts here")
+	// fmt.Println(string(jsonData))
+	// fmt.Println("SOLR Search Data ends here")
 	if err != nil {
 		log.Fatal("Error marshaling JSON:", err)
 	}

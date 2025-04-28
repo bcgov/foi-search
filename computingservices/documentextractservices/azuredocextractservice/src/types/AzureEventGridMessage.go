@@ -7,6 +7,7 @@ type AzureEventGridMessage struct {
 	FoiMinistryRequestID  string `json:"foiministryrequestid"`
 	FoiDocumentPageNumber int    `json:"foidocumentpagenumber"`
 	FoiDocumentURL        string `json:"foidocumenturl"`
+	Content               string `json:"content"`
 }
 
 // EventGridEvent represents the structure of an event in Event Grid.

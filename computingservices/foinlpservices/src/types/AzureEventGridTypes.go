@@ -17,6 +17,7 @@ type AzureEventGridMessage struct {
 	FoiMinistryRequestID  string `json:"foiministryrequestid"`
 	FoiDocumentPageNumber int    `json:"foidocumentpagenumber"`
 	FoiDocumentURL        string `json:"foidocumenturl"`
+	Content               string `json:"content"`
 }
 
 type ValidationEvent struct {

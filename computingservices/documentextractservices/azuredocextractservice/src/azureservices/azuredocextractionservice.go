@@ -120,9 +120,9 @@ func (a *AzureService) getExtractedResults(url string) (types.AnalyzeResults, er
 	if err != nil {
 		return result, fmt.Errorf("error reading response body: %w", err)
 	}
-	fmt.Println("Response Body starts here:")
-	fmt.Println(string(bodyBytes))
-	fmt.Println("Response Body ends here:")
+	// fmt.Println("Response Body starts here:")
+	// fmt.Println(string(bodyBytes))
+	// fmt.Println("Response Body ends here:")
 	var jsonResponse map[string]interface{}
 	json.Unmarshal(bodyBytes, &jsonResponse)
 	err = json.Unmarshal(bodyBytes, &result)

@@ -24,6 +24,7 @@ type AzureExtract struct {
 func main() {
 
 	start := time.Now()
+	var mid time.Time
 	fmt.Println("Start Time :" + start.String())
 	dequeuedmessages, err := httpservices.ProcessMessage()
 	if err != nil {
@@ -43,9 +44,12 @@ func main() {
 				if _analyzeerr == nil && analysisResults.Status == "succeeded" {
 
 					searchdocumentpagelines := []types.SOLRSearchDocument{}
+					searchdocumentpages := []types.SOLRSearchDocument{}
+					documentpagewords := []string{}
 					//pUSH to solr.
 					for _, page := range analysisResults.AnalyzeResult.Pages {
-						for _, line := range page.Lines {
+						var pagewords string
+						for i, line := range page.Lines {
 							receviedDate, timeparseerror := time.Parse(time.RFC3339, request.ReceivedDate)
 							if timeparseerror != nil {
 								fmt.Println("Error parsing custom date-time:", timeparseerror)
@@ -65,19 +69,35 @@ func main() {
 								FoiDocumentURL:         document.DocumentS3URL,
 								FoiRequestType:         request.RequestType,
 							}
+							if i == 0 {
+								searchdocumentpages = append(searchdocumentpages, _solrsearchdocuemnt)
+							}
+
+							pagewords = pagewords + line.Content + " "
 
 							searchdocumentpagelines = append(searchdocumentpagelines, _solrsearchdocuemnt)
-							fmt.Println(_solrsearchdocuemnt.FoiDocumentFileName)
+							// fmt.Println(_solrsearchdocuemnt.FoiDocumentFileName)
+						}
+						// fmt.Println(page.Words)
+						if len(page.Lines) > 0 {
+							documentpagewords = append(documentpagewords, pagewords)
+							// fmt.Printf("docpagewords length: %v\n", len(documentpagewords))
 						}
 
 					}
 
 					solrsearchservices.PushtoSolr(searchdocumentpagelines)
-					eventgridmessages := transformToEventGridMessages(searchdocumentpagelines)
-					go azureservices.PushtoEventGrid(eventgridmessages)
+					mid = time.Now()
+					fmt.Println("Solr Time :" + mid.String())
+					solrTime := mid.Sub(start)
+					fmt.Println("Solr Total time:" + solrTime.String())
+					// fmt.Println(len(documentpagewords))
+					// fmt.Println(len(searchdocumentpages))
+					eventgridmessages := transformToEventGridMessages(searchdocumentpages, documentpagewords)
+					azureservices.PushtoEventGrid(eventgridmessages)
 
 					// Give time(1 sec below) for goroutine to execute before the program exits
-					time.Sleep(1 * time.Second)
+					// time.Sleep(30 * time.Second)
 
 				}
 			}
@@ -91,6 +111,8 @@ func main() {
 	fmt.Println("End Time :" + end.String())
 	total := end.Sub(start)
 	fmt.Println("Total time:" + total.String())
+	eventGridTime := end.Sub(mid)
+	fmt.Println("Event grid time:" + eventGridTime.String())
 }
 
 func getBytesfromDocumentPath(documenturlpath string) []byte {
@@ -119,10 +141,10 @@ func getBytesfromDocumentPath(documenturlpath string) []byte {
 }
 
 // Function to transform SOLRSearchDocument array to AzureEventGridMessage array
-func transformToEventGridMessages(solrDocs []types.SOLRSearchDocument) []types.AzureEventGridMessage {
+func transformToEventGridMessages(solrDocs []types.SOLRSearchDocument, words []string) []types.AzureEventGridMessage {
 	var eventGridMessages []types.AzureEventGridMessage
 
-	for _, doc := range solrDocs {
+	for i, doc := range solrDocs {
 		eventGridMessages = append(eventGridMessages, types.AzureEventGridMessage{
 			Foisolrid:             doc.Foisolrid,
 			FoiDocumentID:         doc.FoiDocumentID,
@@ -130,6 +152,7 @@ func transformToEventGridMessages(solrDocs []types.SOLRSearchDocument) []types.A
 			FoiMinistryRequestID:  doc.FoiMinistryRequestID,
 			FoiDocumentPageNumber: doc.FoiDocumentPageNumber,
 			FoiDocumentURL:        doc.FoiDocumentURL,
+			Content:               words[i],
 		})
 	}
 
