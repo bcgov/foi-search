@@ -88,6 +88,22 @@ func main() {
 	// }
 
 	start := time.Now()
+
+	y, m, d := start.Date()
+
+	filedate := strconv.Itoa(y) + "-" + strconv.Itoa(int(m)) + "-" + strconv.Itoa(d)
+	logfilepath := utils.ViperEnvVariable("logfilepath")
+	file, err := os.OpenFile(logfilepath+filedate+"nlplog.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return
+	}
+	defer file.Close()
+
+	// Redirect stdout to the file.
+	os.Stdout = file
+
 	fmt.Println("Start Time :" + start.String())
 
 	timeoutCounter := 0
@@ -163,6 +179,7 @@ func main() {
 
 		var wg sync.WaitGroup
 		var lockTokens []string
+		var eventInfo []string
 		// const maxConcurrency = 200
 		sem := make(chan struct{}, maxEvents)
 
@@ -175,6 +192,7 @@ func main() {
 		for _, event := range eventResponse.Value {
 			lockToken := event.BrokerProperties.LockToken
 			lockTokens = append(lockTokens, lockToken)
+			eventInfo = append(eventInfo, event.Event.Data.FoiDocumentFilename+" page "+strconv.Itoa(event.Event.Data.FoiDocumentPageNumber))
 
 			wg.Add(1)
 			sem <- struct{}{}
@@ -251,6 +269,10 @@ func main() {
 
 		if len(acknowledgeResponse.SucceededLockTokens) > 0 {
 			successCount += len(acknowledgeResponse.SucceededLockTokens)
+		}
+
+		for _, event := range eventInfo {
+			fmt.Println(event)
 		}
 
 	}

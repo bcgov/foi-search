@@ -48,7 +48,7 @@ func (a *AzureService) AnalyzeAndExtractDocument(jsonPayload []byte, document ty
 		return results, fmt.Errorf("failed to fetch analysis results: %w", err)
 	}
 	//Print extracted data form document
-	fmt.Printf("Analysis Results: %v\n", results)
+	// fmt.Printf("Analysis Results: %v\n", results)
 	return results, err
 }
 

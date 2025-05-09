@@ -6,9 +6,11 @@ import (
 	"azuredocextractservice/s3services"
 	"azuredocextractservice/solrsearchservices"
 	"azuredocextractservice/types"
+	"azuredocextractservice/utils"
 	"fmt"
 	"log"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -24,6 +26,22 @@ type AzureExtract struct {
 func main() {
 
 	start := time.Now()
+
+	y, m, d := start.Date()
+
+	filedate := strconv.Itoa(y) + "-" + strconv.Itoa(int(m)) + "-" + strconv.Itoa(d)
+	logfilepath := utils.ViperEnvVariable("logfilepath")
+	file, err := os.OpenFile(logfilepath+filedate+"docextractlog.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return
+	}
+	defer file.Close()
+
+	// Redirect stdout to the file.
+	os.Stdout = file
+
 	var mid time.Time
 	fmt.Println("Start Time :" + start.String())
 	dequeuedmessages, err := httpservices.ProcessMessage()
@@ -152,6 +170,7 @@ func transformToEventGridMessages(solrDocs []types.SOLRSearchDocument, words []s
 			FoiMinistryRequestID:  doc.FoiMinistryRequestID,
 			FoiDocumentPageNumber: doc.FoiDocumentPageNumber,
 			FoiDocumentURL:        doc.FoiDocumentURL,
+			FoiDocumentFilename:   doc.FoiDocumentFileName,
 			Content:               words[i],
 		})
 	}
