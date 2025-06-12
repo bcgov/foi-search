@@ -89,11 +89,8 @@ func main() {
 
 	start := time.Now()
 
-	y, m, d := start.Date()
-
-	filedate := strconv.Itoa(y) + "-" + strconv.Itoa(int(m)) + "-" + strconv.Itoa(d)
 	logfilepath := utils.ViperEnvVariable("logfilepath")
-	file, err := os.OpenFile(logfilepath+filedate+"nlplog.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	file, err := os.OpenFile(logfilepath+start.Format("2006-01-02")+"nlplog.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 
 	if err != nil {
 		fmt.Println("Error opening file:", err)
@@ -221,6 +218,7 @@ func main() {
 		for res := range results {
 			payloads = append(payloads, res)
 		}
+		log.Printf("payloads: %v", payloads)
 
 		solrsearchservices.SaveDocumentPIIToSolr(payloads)
 

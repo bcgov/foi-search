@@ -27,11 +27,8 @@ func main() {
 
 	start := time.Now()
 
-	y, m, d := start.Date()
-
-	filedate := strconv.Itoa(y) + "-" + strconv.Itoa(int(m)) + "-" + strconv.Itoa(d)
 	logfilepath := utils.ViperEnvVariable("logfilepath")
-	file, err := os.OpenFile(logfilepath+filedate+"docextractlog.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	file, err := os.OpenFile(logfilepath+start.Format("2006-01-02")+"docextractlog.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 
 	if err != nil {
 		fmt.Println("Error opening file:", err)
@@ -43,14 +40,14 @@ func main() {
 	os.Stdout = file
 
 	var mid time.Time
-	fmt.Println("Start Time :" + start.String())
+	fmt.Println("\nStart Time :" + start.String())
 	dequeuedmessages, err := httpservices.ProcessMessage()
 	if err != nil {
 		log.Fatalf("Error fetching messages: %v", err)
 	}
 	// Print each message
 	for _, message := range dequeuedmessages {
-		fmt.Printf("Received message: %+v\n", message)
+		fmt.Printf("Received message: %+v", message)
 
 		var requests []types.Requests = message.Requests
 
@@ -59,12 +56,14 @@ func main() {
 				var parsedURL = document.DocumentS3URL
 				var jsonStrbytes []byte = getBytesfromDocumentPath(parsedURL)
 				analysisResults, _analyzeerr := azureservices.CallAzureDocument(jsonStrbytes, document, request)
-				if _analyzeerr == nil && analysisResults.Status == "succeeded" {
-
+				if _analyzeerr != nil {
+					fmt.Printf("Skipping document ID - %v (request ID - %v) due to error: %v", document.DocumentID, request.MinistryRequestID, err)
+					continue // Move to the next document
+				} else if analysisResults.Status == "succeeded" {
 					searchdocumentpagelines := []types.SOLRSearchDocument{}
 					searchdocumentpages := []types.SOLRSearchDocument{}
 					documentpagewords := []string{}
-					//pUSH to solr.
+					//PUSH to solr.
 					for _, page := range analysisResults.AnalyzeResult.Pages {
 						var pagewords string
 						for i, line := range page.Lines {
@@ -148,11 +147,12 @@ func getBytesfromDocumentPath(documenturlpath string) []byte {
 		fmt.Println("Invalid URL format")
 		return nil
 	}
-	fmt.Printf("Bucket: %s, Key: %s\n", bucketName, relativePath)
+	fmt.Printf("Bucket: %s, Key: %s", bucketName, relativePath)
 	var s3url = s3services.GetFilefroms3(relativePath, bucketName)
 	jsonStr := `{
 			"urlSource": "` + s3url + `"
 		}`
+	//fmt.Println("After getting file from S3:", jsonStr)
 	var jsonStrbytes = []byte(jsonStr)
 
 	return jsonStrbytes

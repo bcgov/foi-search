@@ -87,7 +87,7 @@ func SaveDocumentPIIToSolr(payload []types.SolrPayload) bool {
 		panic(err)
 	}
 
-	// fmt.Println(string(jsonBytes))
+	fmt.Println(string(jsonBytes))
 
 	// Solr endpoint URL (Replace with your Solr endpoint)
 	url := utils.ViperEnvVariable("solrendpoint")
@@ -108,6 +108,8 @@ func SaveDocumentPIIToSolr(payload []types.SolrPayload) bool {
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Fatal("Error sending request:", err)
+	} else {
+		fmt.Printf("Response Status: %s\n", resp.Status)
 	}
 	defer resp.Body.Close()
 
