@@ -57,7 +57,7 @@ func main() {
 				var jsonStrbytes []byte = getBytesfromDocumentPath(parsedURL)
 				analysisResults, _analyzeerr := azureservices.CallAzureDocument(jsonStrbytes, document, request)
 				if _analyzeerr != nil {
-					fmt.Printf("Skipping document ID - %v (request ID - %v) due to error: %v", document.DocumentID, request.MinistryRequestID, err)
+					fmt.Printf("Skipping document ID - %v (request ID - %v) due to error: %v", document.DocumentID, request.MinistryRequestID, _analyzeerr)
 					continue // Move to the next document
 				} else if analysisResults.Status == "succeeded" {
 					searchdocumentpagelines := []types.SOLRSearchDocument{}
