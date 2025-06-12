@@ -6,11 +6,9 @@ import (
 	"azuredocextractservice/s3services"
 	"azuredocextractservice/solrsearchservices"
 	"azuredocextractservice/types"
-	"azuredocextractservice/utils"
 	"fmt"
 	"log"
 	"net/url"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -26,18 +24,6 @@ type AzureExtract struct {
 func main() {
 
 	start := time.Now()
-
-	logfilepath := utils.ViperEnvVariable("logfilepath")
-	file, err := os.OpenFile(logfilepath+start.Format("2006-01-02")+"docextractlog.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-
-	if err != nil {
-		fmt.Println("Error opening file:", err)
-		return
-	}
-	defer file.Close()
-
-	// Redirect stdout to the file.
-	os.Stdout = file
 
 	fmt.Println("\nStart Time :" + start.String())
 	dequeuedmessages, err := httpservices.ProcessMessage()
