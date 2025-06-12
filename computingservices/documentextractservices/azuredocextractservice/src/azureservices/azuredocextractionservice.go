@@ -43,12 +43,12 @@ func (a *AzureService) AnalyzeAndExtractDocument(jsonPayload []byte, document ty
 		wrapDocReviewerAudit(document.DocumentID, request.MinistryRequestID, apimRequestID, "azureextractrequestcreated")
 	}
 
-	results, err = a.getAnalysisResults(apimRequestID, document.DocumentID, request.MinistryRequestID)
-	if err != nil {
-		return results, fmt.Errorf("failed to fetch analysis results: %w", err)
+	results, error := a.getAnalysisResults(apimRequestID, document.DocumentID, request.MinistryRequestID)
+	if error != nil {
+		return results, fmt.Errorf("failed to fetch analysis results: %v", error)
 	}
 	//Print extracted data form document
-	fmt.Printf("Analysis Results: %v\n", results)
+	fmt.Printf("Reached end of analysis results\n")
 	return results, err
 }
 
@@ -113,6 +113,7 @@ func (a *AzureService) getExtractedResults(url string) (types.AnalyzeResults, er
 		return result, fmt.Errorf("error making HTTP request: %w", err)
 	}
 	defer res.Body.Close()
+	fmt.Println("Response status code:", res.StatusCode)
 	if res.StatusCode != http.StatusOK {
 		return result, fmt.Errorf("unexpected response status: %s", res.Status)
 	}
@@ -123,8 +124,8 @@ func (a *AzureService) getExtractedResults(url string) (types.AnalyzeResults, er
 	fmt.Println("Response Body starts here:")
 	fmt.Println(string(bodyBytes))
 	fmt.Println("Response Body ends here:")
-	var jsonResponse map[string]interface{}
-	json.Unmarshal(bodyBytes, &jsonResponse)
+	// var jsonResponse map[string]interface{}
+	// json.Unmarshal(bodyBytes, &jsonResponse)
 	err = json.Unmarshal(bodyBytes, &result)
 	if err != nil {
 		return result, fmt.Errorf("error unmarshaling response body: %w", err)
