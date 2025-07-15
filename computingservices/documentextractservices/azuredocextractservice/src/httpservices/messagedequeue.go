@@ -48,16 +48,16 @@ func ProcessMessage() ([]types.QueueMessage, error) {
 			fmt.Println("No more messages in the queue. Exiting...")
 			break
 		}
-		fmt.Printf("Extracted s3uri: %s\n", message.BatchID)
+		//fmt.Printf("Extracted s3uri: %s", message.BatchID)
 		messages = append(messages, *message)
 	}
-	fmt.Println("All messages processed. Exiting.")
+	fmt.Println("All messages processed from Queue. Exiting queue.")
 	return messages, nil
 }
 
 // Fetches a message from the queue
 func fetchMessageFromQueue(url string) (*types.QueueMessage, error) {
-	fmt.Println("URL:", url)
+	//fmt.Println("URL:", url)
 	client := &http.Client{Timeout: 30 * time.Second}
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -72,7 +72,7 @@ func fetchMessageFromQueue(url string) (*types.QueueMessage, error) {
 		return nil, fmt.Errorf("error making HTTP request: %w", err)
 	}
 	defer resp.Body.Close()
-	fmt.Printf("HTTP Status Code: %d\n", resp.StatusCode)
+	fmt.Printf("HTTP Status Code-fetchMessageFromQueue: %d\n", resp.StatusCode)
 	// Handle non-200 HTTP responses
 	if resp.StatusCode != http.StatusOK {
 		if resp.StatusCode == http.StatusNoContent {

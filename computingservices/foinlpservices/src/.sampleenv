@@ -1,0 +1,13 @@
+azurelanguageserviceendpoint=https://<languageservicename>.cognitiveservices.azure.com/
+azureapikey=
+solrendpoint=https://<enpoint>/solr/<core>/
+solrauthkey=
+solradmin=
+solrpassword=
+eventgridendpoint=
+eventgridapiversion=api-version=2023-06-01-preview
+eventgridaccesskey=
+eventgridmaxtimeouts=2
+eventgridtimeoutseconds=30
+eventgridmaxevents=100
+logfilepath=C:\<yourpath>\logs
