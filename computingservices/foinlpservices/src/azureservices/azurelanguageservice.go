@@ -13,10 +13,6 @@ import (
 func IdentifyPII(text string, client *http.Client) string {
 	endpoint := utils.ViperEnvVariable("azurelanguageserviceendpoint")
 	apiKey := utils.ViperEnvVariable("azureapikey")
-	// Sample text for PII detection
-	// text := "John Doe, a 35-year-old software engineer, lives at 1234 Elm Street, Springfield, Ontario, M5A 1A1. His phone number is (555) 123-4567, and his email address is johndoe@example.com. He was born on March 14, 1988, and holds a Canadian passport with the number X1234567. His employee ID at Acme Corp. is 8765. John’s credit card number is 4111 2222 3333 4444, and his Canadian SIN is 123 456 789. His health insurance ID is HI987654321"
-
-	// text := document.Text[0]
 
 	// Prepare the request payload
 	payload := types.RequestPayload{
@@ -45,9 +41,6 @@ func IdentifyPII(text string, client *http.Client) string {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Ocp-Apim-Subscription-Key", apiKey)
 
-	// Send the request
-	// client := &http.Client{}
-	// log.Printf("sending request")
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Fatalf("Failed to send request: %v", err)
@@ -60,43 +53,13 @@ func IdentifyPII(text string, client *http.Client) string {
 		log.Fatalf("Request failed with status code: %d", resp.StatusCode)
 	}
 
-	// log.Printf("checked error code")
-
-	// Decode the response
-	// var result types.ResponsePayload
-	// if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-	// 	log.Fatalf("Failed to decode response: %v", err)
-	// }
-
 	jsonBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatalf("Failed to read response body: %v", err)
 	}
 
-	// log.Printf("read body")
-
 	jsonString := string(jsonBytes) // Convert bytes to string
-
-	// log.Printf("converted to string")
-	// fmt.Printf("jsonBytes" + jsonString)
-
-	// var result types.ResponsePayload
-	// err = json.Unmarshal(jsonBytes, &result)
-	// if err != nil {
-	// 	log.Fatalf("Invalid JSON: %v", err)
-	// 	// return
-	// }
-
-	// Print the detected PII entities
-	// for _, doc := range result.Documents {
-	// 	fmt.Printf("Document ID: %s\n", doc.ID)
-	// 	for _, entity := range doc.Entities {
-	// 		fmt.Printf("Entity: %s, Category: %s, SubCategory: %s, Confidence Score: %.2f\n",
-	// 			entity.Text, entity.Category, entity.SubCategory, entity.ConfidenceScore)
-	// 	}
-	// }
 
 	return jsonString
 
-	// call solr api to save results
 }

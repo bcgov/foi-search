@@ -32,10 +32,6 @@ func GetSolrDocumentByID(id string) types.SolrDocument {
 		log.Fatalf("Request failed with status code: %d", resp.StatusCode)
 	}
 
-	// var result ResponsePayload
-	// if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-	// 	log.Fatalf("Failed to decode response: %v", err)
-	// }
 	var solrresponse types.SolrResp
 
 	if err := json.NewDecoder(resp.Body).Decode(&solrresponse); err != nil {
@@ -60,26 +56,6 @@ func GetSolrDocumentByID(id string) types.SolrDocument {
 }
 
 func SaveDocumentPIIToSolr(payload []types.SolrPayload) bool {
-
-	// fmt.Println(id)
-
-	// Convert the struct to JSON
-	// jsonData, err := json.Marshal(searchdocs)
-	// fmt.Println("SOLR Search Data starts here")
-	// fmt.Println(string(jsonData))
-	// fmt.Println("SOLR Search Data ends here")
-	// if err != nil {
-	// 	log.Fatal("Error marshaling JSON:", err)
-	// }
-
-	// payload := []types.SolrPayload{
-	// 	{
-	// 		ID: id,
-	// 		FoipiiJSON: types.FoipiiJSON{
-	// 			Set: []string{pii},
-	// 		},
-	// 	},
-	// }
 
 	// Convert to JSON
 	jsonBytes, err := json.Marshal(payload)

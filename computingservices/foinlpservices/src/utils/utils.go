@@ -26,7 +26,7 @@ func ViperEnvVariable(key string) string {
 	// If the type is a string then ok will be true
 	// ok will make sure the program not break
 	if !ok {
-		log.Fatalf("Invalid type assertion")
+		log.Fatalf("%s ENV VAR ISSUE: Invalid type assertion", key)
 	}
 	return value
 }
