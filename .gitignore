@@ -1,3 +1,4 @@
 computingservices/documentextractservices/azuredocextractservice/src/foiazuredocextractservice
 .vscode/*
 computingservices/documentextractservices/azuredocextractservice/src/.env
+computingservices/foinlpservices/src/.env
