@@ -3,7 +3,7 @@ package azureservices
 import (
 	"azuredocextractservice/types"
 	"azuredocextractservice/utils"
-	"log"
+	"fmt"
 )
 
 func CallAzureDocument(jsonPayload []byte, document types.Documents, request types.Requests) (types.AnalyzeResults, error) {
@@ -14,7 +14,9 @@ func CallAzureDocument(jsonPayload []byte, document types.Documents, request typ
 
 	result, err := service.AnalyzeAndExtractDocument(jsonPayload, document, request)
 	if err != nil {
-		log.Fatalf("Error calling Azure Document API: %v", err)
+		fmt.Printf("Error calling Azure Document API: %v\n", err)
+		return result, err
+		//log.Fatalf("Error calling Azure Document API: %v", err)
 	}
 
 	return result, err

@@ -43,13 +43,14 @@ func (a *AzureService) AnalyzeAndExtractDocument(jsonPayload []byte, document ty
 		wrapDocReviewerAudit(document.DocumentID, request.MinistryRequestID, apimRequestID, "azureextractrequestcreated")
 	}
 
-	results, err = a.getAnalysisResults(apimRequestID, document.DocumentID, request.MinistryRequestID)
-	if err != nil {
-		return results, fmt.Errorf("failed to fetch analysis results: %w", err)
+	results, error := a.getAnalysisResults(apimRequestID, document.DocumentID, request.MinistryRequestID)
+	//fmt.Printf("Analysis Results-err: %v\n", error)
+	if error != nil {
+		return results, fmt.Errorf("failed to fetch analysis results: %v", error)
 	}
 	//Print extracted data form document
-	fmt.Printf("Analysis Results: %v\n", results)
-	return results, err
+	fmt.Printf("Reached end of analysis results\n")
+	return results, error
 }
 
 // sendAnalyzeRequest sends the initial analysis request to the Azure API
@@ -113,22 +114,25 @@ func (a *AzureService) getExtractedResults(url string) (types.AnalyzeResults, er
 		return result, fmt.Errorf("error making HTTP request: %w", err)
 	}
 	defer res.Body.Close()
+	fmt.Println("Response status code:", res.StatusCode)
 	if res.StatusCode != http.StatusOK {
+		//fmt.Println("Return error: ", res.Status)
 		return result, fmt.Errorf("unexpected response status: %s", res.Status)
 	}
 	bodyBytes, err := io.ReadAll(res.Body)
 	if err != nil {
 		return result, fmt.Errorf("error reading response body: %w", err)
 	}
-	fmt.Println("Response Body starts here:")
-	fmt.Println(string(bodyBytes))
-	fmt.Println("Response Body ends here:")
-	var jsonResponse map[string]interface{}
-	json.Unmarshal(bodyBytes, &jsonResponse)
+	// fmt.Println("Response Body starts here:")
+	// fmt.Println(string(bodyBytes))
+	// fmt.Println("Response Body ends here:")
+	// var jsonResponse map[string]interface{}
+	// json.Unmarshal(bodyBytes, &jsonResponse)
 	err = json.Unmarshal(bodyBytes, &result)
 	if err != nil {
 		return result, fmt.Errorf("error unmarshaling response body: %w", err)
 	}
+	//fmt.Println("Result:", result)
 	return result, nil
 }
 
