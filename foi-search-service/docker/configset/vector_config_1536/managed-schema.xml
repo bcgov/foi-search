@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<schema name="vector_collection_1536" version="1.6">
+
+
+    <field name="id" type="string" indexed="true" stored="true" required="true"/>
+    <field name="sentence_hash" type="string" indexed="true" stored="true"/>
+    <field name="sentence" type="text_general" multiValued="true" stored="true"/>
+    <field name="model_name" type="string" multiValued="true" stored="true"/>
+    <field name="provider" type="string" multiValued="true" stored="true"/>
+    <field name="embedding_dimension" type="pint" stored="true"/>
+    <field name="sentence_index" type="pint" stored="true"/>
+    <field name="embedding_vector" type="knn_vector" indexed="true" stored="true"/>
+    <field name="type" type="string" stored="true" multiValued="true"/>
+    <field name="processing_date" type="tdate" stored="true" />
+
+    <field name="num_sentences" type="pint" stored="true" multiValued="false"/>
+
+    <field name="tokens" type="string" stored="true" multiValued="true"/>
+    <field name="tokens_used" type="pint" stored="true" multiValued="false"/>
+    <field name="input_ids" type="pint" stored="true" multiValued="true"/>
+    <field name="attention_mask" type="pint" stored="true" multiValued="true"/>
+    <field name="tokens_used_total" type="pint" stored="true" multiValued="true"/>
+    <field name="cost_estimate_total" type="pfloat" stored="true"/>
+
+    <dynamicField name="meta_*" type="string" stored="true" indexed="true"/>
+
+    <field name="_root_" type="string" stored="true"/>
+    <uniqueKey>id</uniqueKey>
+
+    <field name="_version_" type="plong" indexed="true" stored="true" docValues="true" multiValued="false"/>
+
+      <!-- Field Types -->
+    <fieldType name="_nest_path_" class="solr.NestPathField" omitTermFreqAndPositions="true" omitNorms="true" maxCharsForDocValues="-1" stored="false" multiValued="false"/>
+    <fieldType name="pint" class="solr.IntPointField" docValues="true"/>
+    <fieldType name="pints" class="solr.IntPointField" docValues="true" multiValued="true"/>
+    <fieldType name="plong" class="solr.LongPointField" docValues="true"/>
+    <fieldType name="plongs" class="solr.LongPointField" docValues="true" multiValued="true"/>
+    <fieldType name="point" class="solr.PointType" subFieldSuffix="_d" dimension="2"/>
+    <fieldType name="random" class="solr.RandomSortField" indexed="true"/>
+    <fieldType name="rank" class="solr.RankField"/>
+    <fieldType name="string" class="solr.StrField" sortMissingLast="true" docValues="true"/>
+    <fieldType name="strings" class="solr.StrField" sortMissingLast="true" docValues="true" multiValued="true"/>
+    <fieldType name="pfloat" class="solr.FloatPointField" positionIncrementGap="0"/>
+    <fieldType name="knn_vector" class="solr.DenseVectorField" vectorDimension="1536" similarityFunction="cosine" knnAlgorithm="hnsw" hnswMaxConnections="10" hnswBeamWidth="40"/>
+    <fieldType name="text_general" class="solr.TextField" positionIncrementGap="100"/>
+    <fieldType name="tdate" class="solr.DatePointField" docValues="true"/>
+
+</schema>

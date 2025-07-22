@@ -1,0 +1,54 @@
+version: "3.9"
+
+services:
+  # Main FOI Search Service API application
+  foi-search-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: foi-search-service-api
+    ports:
+      - "8000:80"
+    volumes:
+      - ${HOME}/.cache/huggingface:/hf_cache
+      - ${HOME}/.cache/spacy:/home/appuser/.cache/spacy
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - foiearchservice-network
+    depends_on:
+      solr:
+        condition: service_healthy
+
+  # Apache Solr search engine
+  solr:
+    image: solr:9.8.1
+    container_name: foiearchservice-solr
+    ports:
+      - "8983:8983"
+    volumes:
+      - solr_data:/var/solr
+      - ./docker/configset/vector_config_384:/opt/solr/server/solr/configsets/vector_config_384
+      - ./docker/configset/vector_config_1536:/opt/solr/server/solr/configsets/vector_config_1536
+      - ./docker/configset/foisearch:/opt/solr/server/solr/configsets/foisearch
+      - ./docker/init:/docker-entrypoint-initdb.d
+    environment:
+      - SOLR_HEAP=1g
+      - SOLR_JAVA_MEM=-Xms512m -Xmx1g
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8983/solr/vector_collection_384/admin/ping || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - foiearchservice-network
+
+volumes:
+  solr_data:
+    driver: local
+
+networks:
+  foiearchservice-network:
+    driver: bridge
