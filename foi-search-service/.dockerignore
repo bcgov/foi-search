@@ -1,0 +1,163 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# Python cache and virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+.env.local
+.env.development
+.env.test
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Testing and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Documentation build
+docs/_build/
+site/
+
+# Large data files and temporary directories
+data/large/
+*.tar.gz
+*.zip
+*.rar
+temp/
+tmp/
+
+# Cache directories
+cache/large/
+.cache/
+
+# Log files
+*.log
+logs/*.log
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Development tools
+.pre-commit-config.yaml
+.github/
+.travis.yml
+.circleci/
+
+# Package build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Database files (local development)
+*.db
+*.sqlite
+*.sqlite3
+
+# Node.js (if any frontend components)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker files (avoid recursion)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Large model files (download in container instead)
+models/
+*.bin
+*.safetensors
+
+# Development and testing artifacts
+.bandit
+.flake8_cache
+.pylint.d/
+
+# Monitoring and profiling
+profile_*.prof
+*.prof
+
+# Screenshots and images (unless part of docs)
+screenshots/
+*.png
+*.jpg
+*.gif
+*.svg
+
+# Temporary files
+*.tmp
+*.temp
+
+# MacOS
+.AppleDouble
+.LSOverride
+
+# Windows
+ehthumbs_vista.db
+*.stackdump
+
+# Editor backups
+*~
+*.orig
+*.rej
+
+# Security files
+.env
+.env.*
+secrets/
+*.pem
+*.key
+*.crt
+
+# Large output files
+output/large/
+processed/
+migration_backup/
+
+# Specific to this project
+Integration\ Examples.txt
+examples/cache/
+examples/output/large/

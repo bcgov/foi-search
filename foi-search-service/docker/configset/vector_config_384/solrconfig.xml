@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+  <luceneMatchVersion>9.8.1</luceneMatchVersion>
+  
+  <directoryFactory name="DirectoryFactory" class="solr.StandardDirectoryFactory"/>
+  
+  <schemaFactory class="ManagedIndexSchemaFactory">
+    <bool name="mutable">true</bool>
+    <str name="managedSchemaResourceName">managed-schema.xml</str>
+  </schemaFactory>
+  
+  <requestHandler name="/select" class="solr.SearchHandler">
+    <lst name="defaults">
+      <str name="echoParams">explicit</str>
+      <int name="rows">10</int>
+    </lst>
+  </requestHandler>
+  
+  <requestHandler name="/update" class="solr.UpdateRequestHandler"/>
+  
+  <updateHandler class="solr.DirectUpdateHandler2">
+    <updateLog>
+      <str name="dir">${solr.ulog.dir:}</str>
+    </updateLog>
+  </updateHandler>
+
+  <textEmbedding>
+  <embedding name="a-model" class="org.apache.solr.textembedding.HuggingFaceTextEmbedding">
+    <str name="modelPath">sentence-transformers/all-MiniLM-L6-v2</str>
+    <str name="cacheDir">/var/solr/models</str> <!-- optional -->
+  </embedding>
+</textEmbedding>
+  
+</config>
