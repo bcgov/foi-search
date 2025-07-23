@@ -1,0 +1,35 @@
+# GitHub Actions workflow for building and tagging the API image on PR
+name: FOI SEARCH API - Image Build
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review] # Triggered by opened or changed pull requests.
+    branches: [main]
+    paths:
+      - 'foi-search-service/**' # Triggers on changes to files in the express-api/ directory.
+  workflow_dispatch:
+
+jobs:
+  Build-Tag-Push:
+    runs-on: ubuntu-latest
+    steps:
+      # check out the repo
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      # Login to BC Gov Docker Image Repository
+      - name: Login to Openshift Docker
+        run: |
+          docker login ${{ secrets.PUBLIC_IMAGE_REPOSITORY }} -u ${{ secrets.OPENSHIFT_SA_NAME }} -p ${{ secrets.OPENSHIFT_SA_TOOLS_TOKEN }}
+
+      # Build the API Image 
+      - name: Build API Image
+        run: |
+          cd foi-search-service && docker build -t ${{ secrets.PUBLIC_IMAGE_REPOSITORY }}/${{ secrets.OPENSHIFT_TOOLS_NAMESPACE }}/foi-search-api:latest -f Dockerfile .
+
+      # Push the API Image
+      - name: Push API Image
+        run: |
+          docker push ${{ secrets.PUBLIC_IMAGE_REPOSITORY }}/${{ secrets.OPENSHIFT_TOOLS_NAMESPACE }}/foi-search-api:latest
