@@ -6,7 +6,7 @@ on:
     types: [opened, synchronize, ready_for_review] # Triggered by opened or changed pull requests.
     branches: [main]
     paths:
-      - 'foi-search-service/**' # Triggers on changes to files in the express-api/ directory.
+      - 'foi-search-service/**' # Triggers on changes to files in the foi-search-service/ directory.
   workflow_dispatch:
 
 jobs:
