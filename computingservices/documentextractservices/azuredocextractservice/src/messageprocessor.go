@@ -43,7 +43,7 @@ func main() {
 	fmt.Println("\nStart Time :" + start.String())
 	dequeuedmessages, err := httpservices.ProcessMessage()
 	if err != nil {
-		log.Fatalf("Error fetching messages: %v", err)
+		log.Printf("Error fetching messages: %v", err)
 	}
 	// Print each message
 	for _, message := range dequeuedmessages {
