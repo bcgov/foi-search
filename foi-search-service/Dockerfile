@@ -79,6 +79,10 @@ COPY --from=builder /build/hf_cache /app/hf_cache
 RUN chown -R appuser:appuser /app
 RUN chown -R appuser:appuser /app/hf_cache
 
+# Copy the entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 USER appuser
 
 EXPOSE 80
