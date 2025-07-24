@@ -66,7 +66,7 @@ RUN pip install --upgrade pip setuptools>=80.9.0 wheel
 # Install built wheels and runtime deps
 COPY --from=builder /build/wheels /tmp/wheels
 
-RUN pip install --find-links=/tmp/wheels foi-search-api \
+RUN pip install --find-links=/tmp/wheels foi-search-service \
     && pip install uvicorn[standard] \
     && rm -rf /tmp/wheels
 
