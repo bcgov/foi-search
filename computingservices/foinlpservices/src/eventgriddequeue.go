@@ -119,7 +119,7 @@ func main() {
 
 		results := make(chan types.SolrPayload, maxEvents)
 
-		log.Println(len(eventResponse.Value))
+		// log.Println(len(eventResponse.Value))
 
 		for _, event := range eventResponse.Value {
 			lockToken := event.BrokerProperties.LockToken

@@ -15,7 +15,7 @@ func GetSolrDocumentByID(id string) types.SolrDocument {
 	// fmt.Println(id)
 	req, err := http.NewRequest("GET", solrendpoint+"get?ids="+id, nil)
 	if err != nil {
-		log.Fatalf("Failed to create request: %v", err)
+		log.Printf("Failed to create request: %v", err)
 	}
 
 	req.Header.Set("Authorization", "Basic "+utils.ViperEnvVariable("solrauthkey"))
@@ -23,19 +23,19 @@ func GetSolrDocumentByID(id string) types.SolrDocument {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatalf("Failed to send request: %v", err)
+		log.Printf("Failed to send request: %v", err)
 	}
 	defer resp.Body.Close()
 
 	// Check the response status code
 	if resp.StatusCode != http.StatusOK {
-		log.Fatalf("Request failed with status code: %d", resp.StatusCode)
+		log.Printf("Request failed with status code: %d", resp.StatusCode)
 	}
 
 	var solrresponse types.SolrResp
 
 	if err := json.NewDecoder(resp.Body).Decode(&solrresponse); err != nil {
-		log.Fatalf("Failed to decode response: %v", err)
+		log.Printf("Failed to decode response: %v", err)
 	}
 
 	// fmt.Printf("Response: %s\n", string(solrresponse.Body))
@@ -45,11 +45,11 @@ func GetSolrDocumentByID(id string) types.SolrDocument {
 	err = json.Unmarshal(solrresponse.Body, &solrdetails)
 
 	if !solrdetails.NumFoundExact {
-		log.Fatalf("More than one solr result returned")
+		log.Printf("More than one solr result returned")
 	}
 
 	if solrdetails.Documents[0].ID != id {
-		log.Fatalf("Incorrect ID returned: %v", err)
+		log.Printf("Incorrect ID returned: %v", err)
 	}
 
 	return solrdetails.Documents[0]
@@ -71,7 +71,7 @@ func SaveDocumentPIIToSolr(payload []types.SolrPayload) bool {
 	// fmt.Println(url + "update?commit=true")
 	req, err := http.NewRequest("POST", url+"update?commit=true", bytes.NewBuffer(jsonBytes))
 	if err != nil {
-		log.Fatal("Error creating request:", err)
+		log.Print("Error creating request:", err)
 	}
 
 	// Set the appropriate headers for JSON content
@@ -83,7 +83,7 @@ func SaveDocumentPIIToSolr(payload []types.SolrPayload) bool {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal("Error sending request:", err)
+		log.Print("Error sending request:", err)
 	} else {
 		fmt.Printf("Response Status: %s\n", resp.Status)
 	}
