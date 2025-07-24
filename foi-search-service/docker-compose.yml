@@ -9,9 +9,9 @@ services:
     container_name: foi-search-service-api
     ports:
       - "8000:80"
-    volumes:
-      - ${HOME}/.cache/huggingface:/hf_cache
-      - ${HOME}/.cache/spacy:/home/appuser/.cache/spacy
+    environment:
+      - HF_HUB_CACHE=/app/hf_cache/hub
+      - HF_HOME=/app/hf_cache
     env_file:
       - .env
     restart: unless-stopped

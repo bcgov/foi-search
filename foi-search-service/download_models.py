@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Model download script for FOI Search Service application.
+Model download script for foi-search-service-api application.
 Downloads sentence-transformers/all-MiniLM-L6-v2 during Docker build.
 """
 
@@ -24,8 +24,8 @@ def download_model(model_name: str = "sentence-transformers/all-MiniLM-L6-v2"):
     try:
         logger.info(f"Starting download of model: {model_name}")
 
-        # Verify cache directory exists
-        cache_dir = os.environ.get('HF_HUB_CACHE', '/app/.cache/huggingface/hub')
+        # Verify cache directory exists or create it
+        cache_dir = os.environ.get('HF_HUB_CACHE', '/build/hf_cache/hub')
         os.makedirs(cache_dir, exist_ok=True)
         logger.info(f"Using cache directory: {cache_dir}")
 

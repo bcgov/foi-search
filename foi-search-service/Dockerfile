@@ -1,51 +1,89 @@
 # ---------- Build Stage ----------
-FROM python:3.11-slim-bullseye AS builder
+FROM python:3.11-slim AS builder
+
+ENV PIP_DEFAULT_TIMEOUT=100 \
+    # Allow statements and log messages to immediately appear
+    PYTHONUNBUFFERED=1 \
+    # disable a pip version check to reduce run-time & log-spam
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    # cache is useless in docker image, so disable to reduce image size
+    PIP_NO_CACHE_DIR=1
 
 WORKDIR /build
 
-# Install build dependencies only in the build stage
+# Install build dependencies
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential curl ca-certificates && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+    apt-get install -y --no-install-recommends \
+    build-essential gcc libffi-dev python3-dev && \
+    rm -rf /var/lib/apt/lists/*
 
-# Copy only what is needed to install dependencies
-COPY setup.cfg pyproject.toml README.md ./
+# Copy dependency files and source code
+COPY setup.cfg pyproject.toml README.md download_models.py ./
 COPY src ./src
 
-# Install Python dependencies to a wheelhouse (or into /build/venv)
-RUN pip install --upgrade pip==24.0 \
- && pip wheel . --wheel-dir=/build/wheels
+# Build wheels
+RUN pip wheel . --wheel-dir=/build/wheels
 
-# ---------- Final (Runtime) Stage ----------
-FROM python:3.11-slim-bullseye
+# Pre-install torch CPU (change version as needed)
+RUN pip install torch>=2.7.1+cpu --index-url https://download.pytorch.org/whl/cpu
+
+RUN pip install sentence-transformers>=5.0.0
+
+RUN mkdir -p /build/hf_cache
+RUN mkdir -p /build/hf_cache/hub
+
+ENV HF_HOME=/build/hf_cache \
+    HF_HUB_CACHE=/build/hf_cache/hub
+
+# Download the model
+RUN python download_models.py
+
+
+# ---------- Final Stage ----------
+FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    HF_HOME=/hf_cache \
-    HF_HUB_CACHE=/hf_cache/hub
+    HF_HOME=/app/hf_cache \
+    HF_HUB_CACHE=/app/hf_cache/hub
 
 WORKDIR /app
 
-# Copy only built dependencies (wheels) and install
-COPY --from=builder /build/wheels /wheels
-RUN pip install --no-cache-dir --find-links=/wheels your-package-name
+# Install runtime dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/*
 
-# Copy source code (no build tools!)
-COPY src ./src
-COPY setup.cfg pyproject.toml README.md ./
+# Create appuser
+RUN groupadd -g 1000 appuser \
+    && useradd -u 1000 -g appuser -s /bin/bash -m appuser
 
-# Create user (optional)
-RUN groupadd -g 1000 appuser && \
-    useradd -u 1000 -g appuser -s /bin/bash -m appuser && \
-    chown -R appuser:appuser /app
+## Upgrade pip, setuptools, and wheel
+RUN pip install --upgrade pip setuptools>=80.9.0 wheel
+
+# Install built wheels and runtime deps
+COPY --from=builder /build/wheels /tmp/wheels
+
+RUN pip install --find-links=/tmp/wheels foi-search-service \
+    && pip install uvicorn[standard] \
+    && rm -rf /tmp/wheels
+
+# Copy source code
+COPY --from=builder /build/src ./src
+
+COPY --from=builder /build/hf_cache /app/hf_cache
+
+# Set ownership
+RUN chown -R appuser:appuser /app
+RUN chown -R appuser:appuser /app/hf_cache
 
 USER appuser
 
 EXPOSE 80
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:80/health || exit 1
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:80/health').read()" || exit 1
 
-CMD ["uvicorn", "src.api.server:app", "--host", "0.0.0.0", "--port", "80", "--workers", "1"]
+CMD ["python", "-m", "uvicorn", "src.api.server:app", "--host", "0.0.0.0", "--port", "80", "--workers", "1"]
