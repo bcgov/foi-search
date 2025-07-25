@@ -8,7 +8,7 @@ services:
       dockerfile: Dockerfile
     container_name: foi-search-service-api
     ports:
-      - "8000:80"
+      - "8000:8000"
     environment:
       - HF_HUB_CACHE=/app/hf_cache/hub
       - HF_HOME=/app/hf_cache

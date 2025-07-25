@@ -77,15 +77,11 @@ COPY --from=builder /build/hf_cache /app/hf_cache
 
 # Set ownership
 RUN chown -R appuser:appuser /app
-RUN chown -R appuser:appuser /app/hf_cache
-
-# Copy the entrypoint script
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# Set permissions for HF cache
+RUN chmod -R 777 /app/hf_cache
 
 USER appuser
 
 EXPOSE 8000
 
-ENTRYPOINT ["/entrypoint.sh"]
 CMD ["python", "-m", "uvicorn", "src.api.server:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
