@@ -2,10 +2,13 @@
 
 import logging
 import time
+from typing import Dict, Any
+
 from fastapi import APIRouter, Depends, HTTPException
 from src.api.models.index_models import AddDocumentsRequest, AddDocumentsResponse, SemanticSearchResponse, \
     SemanticSearchRequest, SearchDoc
 from src.api.dependencies.dependencies import get_document_service
+from src.auth.keycloak_auth import keycloak_auth
 from src.services.document_service import DocumentService
 from src.api.exceptions.exceptions import ValidationException
 from fastapi import Security
@@ -21,6 +24,7 @@ router = APIRouter(prefix="/index", tags=["index"])
 async def add_documents(
     request: AddDocumentsRequest,
     document_service: DocumentService = Depends(get_document_service),
+    user: Dict[str, Any] = Depends(keycloak_auth)
 ):
     """Add documents to the search index.
 
@@ -60,7 +64,8 @@ async def add_documents(
 @router.post("/semantic-search", response_model=SemanticSearchResponse, dependencies=[Security(security)])
 async def semantic_search(
         request: SemanticSearchRequest,
-        document_service: DocumentService = Depends(get_document_service)
+        document_service: DocumentService = Depends(get_document_service),
+        user: Dict[str, Any] = Depends(keycloak_auth)
 ):
     """Perform semantic search on indexed documents.
     - **query**: The query sentence to search for
