@@ -108,7 +108,7 @@ async def validate_jwt_token(token: str) -> Dict[str, Any]:
             algorithms=[key["alg"]],
             audience=config.keycloak_audience,
             issuer=config.keycloak_issuer,
-            options={"verify_at_hash": True}
+            options={"verify_at_hash": False}
         )
         
         logger.debug(f"Token validated successfully for user: {payload.get('sub')}")
