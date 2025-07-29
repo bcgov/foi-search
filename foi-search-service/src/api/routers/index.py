@@ -8,12 +8,16 @@ from src.api.models.index_models import AddDocumentsRequest, AddDocumentsRespons
 from src.api.dependencies.dependencies import get_document_service
 from src.services.document_service import DocumentService
 from src.api.exceptions.exceptions import ValidationException
+from fastapi import Security
+from fastapi.security import HTTPBearer
+
+security = HTTPBearer()
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/index", tags=["index"])
 
-@router.post("/add", response_model=AddDocumentsResponse)
+@router.post("/add", response_model=AddDocumentsResponse, dependencies=[Security(security)])
 async def add_documents(
     request: AddDocumentsRequest,
     document_service: DocumentService = Depends(get_document_service),
@@ -53,10 +57,10 @@ async def add_documents(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/semantic-search", response_model=SemanticSearchResponse)
+@router.post("/semantic-search", response_model=SemanticSearchResponse, dependencies=[Security(security)])
 async def semantic_search(
         request: SemanticSearchRequest,
-        document_service: DocumentService = Depends(get_document_service),
+        document_service: DocumentService = Depends(get_document_service)
 ):
     """Perform semantic search on indexed documents.
     - **query**: The query sentence to search for
