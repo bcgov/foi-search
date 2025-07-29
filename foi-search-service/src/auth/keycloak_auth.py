@@ -22,7 +22,7 @@ async def fetch_jwks() -> Dict[str, Any]:
     
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get(config.keycloak_jwks_url, timeout=10.0)
+            response = await client.get(config.keycloak_jwks_url, timeout=config.keycloak_timeout)
             response.raise_for_status()
             jwks_cache = response.json()
             logger.info("JWKS fetched successfully")
@@ -108,7 +108,7 @@ async def validate_jwt_token(token: str) -> Dict[str, Any]:
             algorithms=[key["alg"]],
             audience=config.keycloak_audience,
             issuer=config.keycloak_issuer,
-            options={"verify_at_hash": False}  # Disable at_hash check for access tokens
+            options={"verify_at_hash": True}
         )
         
         logger.debug(f"Token validated successfully for user: {payload.get('sub')}")
