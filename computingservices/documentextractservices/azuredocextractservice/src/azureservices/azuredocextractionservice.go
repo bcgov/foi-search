@@ -38,9 +38,10 @@ func (a *AzureService) AnalyzeAndExtractDocument(jsonPayload []byte, document ty
 	// Send the POST request
 	apimRequestID, err := a.createAnalysisRequest(requestURL, jsonPayload)
 	if err != nil {
+		wrapDocReviewerAudit(document.DocumentID, request.MinistryRequestID, apimRequestID, "extractionjobfailed", err.Error())
 		return results, fmt.Errorf("failed to initiate document analysis: %w", err)
 	} else {
-		wrapDocReviewerAudit(document.DocumentID, request.MinistryRequestID, apimRequestID, "azureextractrequestcreated")
+		wrapDocReviewerAudit(document.DocumentID, request.MinistryRequestID, apimRequestID, "azureextractrequestcreated", "")
 	}
 
 	results, error := a.getAnalysisResults(apimRequestID, document.DocumentID, request.MinistryRequestID)
@@ -81,7 +82,10 @@ func (a *AzureService) getAnalysisResults(apimRequestID string, documentid int64
 	for {
 		time.Sleep(1 * time.Second)
 		result, err := a.getExtractedResults(extractReqURL)
+		errStr := ""
 		if err != nil {
+			errStr = err.Error()
+			wrapDocReviewerAudit(documentid, ministryrequestid, apimRequestID, "extractionjobfailed", errStr)
 			return result, err
 		}
 
@@ -89,13 +93,13 @@ func (a *AzureService) getAnalysisResults(apimRequestID string, documentid int64
 		fmt.Printf("Current status: %s\n", result.Status)
 		switch status {
 		case "succeeded":
-			wrapDocReviewerAudit(documentid, ministryrequestid, apimRequestID, "extractionsucceeded")
+			wrapDocReviewerAudit(documentid, ministryrequestid, apimRequestID, "extractionsucceeded", "")
 			return result, nil
 		case "running":
-			wrapDocReviewerAudit(documentid, ministryrequestid, apimRequestID, "extractionjobrunning")
+			wrapDocReviewerAudit(documentid, ministryrequestid, apimRequestID, "extractionjobrunning", "")
 			continue
 		default:
-			wrapDocReviewerAudit(documentid, ministryrequestid, apimRequestID, "extractionjobfailed")
+			wrapDocReviewerAudit(documentid, ministryrequestid, apimRequestID, "extractionjobfailed", errStr)
 			return result, fmt.Errorf("analysis failed with status: %s", status)
 		}
 	}
@@ -136,13 +140,19 @@ func (a *AzureService) getExtractedResults(url string) (types.AnalyzeResults, er
 	return result, nil
 }
 
-func wrapDocReviewerAudit(documentid int64, ministryrequestidrequest string, apimRequestID string, status string) bool {
+func wrapDocReviewerAudit(documentid int64, ministryrequestidrequest string, apimRequestID string, status string, errormsg string) bool {
 	ministryrequestid, minreqidconerr := strconv.ParseInt(ministryrequestidrequest, 10, 64)
 	if minreqidconerr != nil {
 		fmt.Sprint("Error while converting ministry request ID")
 	}
+	description := fmt.Sprintf(`{apimRequestID:%v`, apimRequestID)
+	// Add Error field only if errormsg is not empty
+	if status == "extractionjobfailed" && errormsg != "" {
+		description += fmt.Sprintf(`, Error:%v`, errormsg)
+	}
+	description += `}`
 	docreviewaudit := types.DocReviewAudit{DocumentID: documentid, MinistryRequestID: ministryrequestid,
-		Description: fmt.Sprintf(`{apimRequestID:%v}`, apimRequestID), Status: status}
+		Description: description, Status: status}
 	returnstate := docreviewerauditservice.PushtoDocReviewer(docreviewaudit)
 	return returnstate
 }
