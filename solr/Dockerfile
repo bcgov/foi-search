@@ -17,9 +17,9 @@ RUN apt-get update -y && \
     zip
 
 LABEL io.k8s.description="Run SOLR search in OpenShift" \
-      io.k8s.display-name="SOLR solr:8.11.2" \
+      io.k8s.display-name="SOLR solr:9.10" \
       io.openshift.expose-services="8983:http" \
-      io.openshift.tags="builder,solr,solr:8.11.2" \
+      io.openshift.tags="builder,solr,solr:9.10" \
       io.openshift.s2i.scripts-url="image:///${STI_SCRIPTS_PATH}"
 
 COPY ./s2i/bin/. ${STI_SCRIPTS_PATH}
