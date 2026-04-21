@@ -1,4 +1,4 @@
-FROM solr:9.10
+FROM solr:9.10.1
 LABEL maintainer="jason.dudash@gmail.com"
 LABEL maintainer="emiliano.sune@gmail.com"
 
@@ -17,9 +17,9 @@ RUN apt-get update -y && \
     zip
 
 LABEL io.k8s.description="Run SOLR search in OpenShift" \
-      io.k8s.display-name="SOLR solr:9.10" \
+      io.k8s.display-name="SOLR solr:9.10.1" \
       io.openshift.expose-services="8983:http" \
-      io.openshift.tags="builder,solr,solr:9.10" \
+      io.openshift.tags="builder,solr,solr:9.10.1" \
       io.openshift.s2i.scripts-url="image:///${STI_SCRIPTS_PATH}"
 
 COPY ./s2i/bin/. ${STI_SCRIPTS_PATH}
